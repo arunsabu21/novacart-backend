@@ -12,7 +12,7 @@ from .serializers import BookSerializer, WishlistSerializer
 
 
 class BookListCreateView(generics.ListCreateAPIView):
-    queryset = Book.objects.all().order_by("-created_at")
+    queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
