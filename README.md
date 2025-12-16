@@ -15,6 +15,7 @@ https://novacart-backend-bnnb.onrender.com
 - Django
 - Django Rest Framework (DRF)
 - JWT Authentication (SimpleJWT)
+- Postman (API Testing)
 - SQLite (development / free-tier deployment)
 - Render (Backend deployment)
 
@@ -69,11 +70,11 @@ Planned features:
 
 ---
 
-## 👤 Author
+##  Author
 **Arun**  
 Software Developer
 
 ---
 
-## 📌 Version
+##  Version
 v1 – Initial production release
