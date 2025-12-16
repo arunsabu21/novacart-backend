@@ -1,7 +1,7 @@
 # NovaCart – Backend (v1)
 
 NovaCart is a backend REST API for an e-commerce application, built using Django Rest Framework.  
-This project focuses on core backend functionality and follows an API-first approach.
+This project follows an API-first approach and focuses on clean, scalable backend architecture.
 
 ##  Live API
 https://novacart-backend-bnnb.onrender.com
@@ -25,6 +25,7 @@ https://novacart-backend-bnnb.onrender.com
 - User authentication using JWT
 - Product listing and product detail APIs
 - Wishlist functionality
+- **Cart functionality (Add / Update / Remove / Fetch)**
 - Admin panel for managing data
 - Password reset via email
 - RESTful API design
@@ -33,33 +34,55 @@ https://novacart-backend-bnnb.onrender.com
 
 ##  API Endpoints
 
-### Authentication
+###  Authentication
 - `POST /api/token/`
 - `POST /api/token/refresh/`
 
-### Products
+---
+
+###  Products
 - `GET /api/products/`
 - `POST /api/products/`
 - `GET /api/products/<id>/`
 - `PUT /api/products/<id>/`
 - `DELETE /api/products/<id>/`
 
-### Wishlist
+---
+
+###  Wishlist
 - `POST /api/products/wishlist/`
 - `GET /api/products/wishlist/`
 - `DELETE /api/products/wishlist/<id>/`
 
 ---
 
+###  Cart
+> All cart endpoints require JWT authentication
+
+- `POST /api/cart/add/`  
+  Add a product to cart or increase quantity
+
+- `GET /api/cart/`  
+  Fetch logged-in user’s cart items
+
+- `PATCH /api/cart/update/<cart_id>/`  
+  Increase or decrease item quantity
+
+- `DELETE /api/cart/remove/<cart_id>/`  
+  Remove item from cart
+
+---
+
 ##  Project Status
 This project is under active development.
 
-Planned features:
-- Cart functionality
+### Planned Features
 - Orders management
+- Checkout flow
 - Payment integration
-- UI and frontend enhancements
+- Frontend UI (React)
 - Persistent production database (PostgreSQL)
+- Deployment hardening (DEBUG=False, env-based config)
 
 ---
 
@@ -67,6 +90,7 @@ Planned features:
 - SQLite is used for learning and free-tier deployment purposes
 - Data may reset on instance restart due to hosting limitations
 - Backend is API-only; frontend will consume these endpoints
+- JWT authentication is required for protected routes
 
 ---
 
@@ -77,4 +101,4 @@ Software Developer
 ---
 
 ##  Version
-v1 – Initial production release
+v1 – Core backend features completed (Auth, Products, Wishlist, Cart)
