@@ -25,7 +25,8 @@ https://novacart-backend-bnnb.onrender.com
 - User authentication using JWT
 - Product listing and product detail APIs
 - Wishlist functionality
-- **Cart functionality (Add / Update / Remove / Fetch)**
+- Cart functionality (Add / Update / Remove / Fetch)
+- **Orders management (Cart → Order conversion)**
 - Admin panel for managing data
 - Password reset via email
 - RESTful API design
@@ -73,23 +74,33 @@ https://novacart-backend-bnnb.onrender.com
 
 ---
 
+###  Orders
+> All order endpoints require JWT authentication
+
+- `POST /api/orders/create/`  
+  Create an order from cart items (clears cart after success)
+
+- `GET /api/orders/my/`  
+  Fetch logged-in user’s order history
+
+---
+
 ##  Project Status
 This project is under active development.
 
 ### Planned Features
-- Orders management
 - Checkout flow
-- Payment integration
+- Payment integration (Razorpay / Stripe)
 - Frontend UI (React)
 - Persistent production database (PostgreSQL)
 - Deployment hardening (DEBUG=False, env-based config)
 
 ---
 
-## ⚠️ Notes
+##  Notes
 - SQLite is used for learning and free-tier deployment purposes
 - Data may reset on instance restart due to hosting limitations
-- Backend is API-only; frontend will consume these endpoints
+- Backend is API-only; frontend consumes these endpoints
 - JWT authentication is required for protected routes
 
 ---
@@ -101,4 +112,5 @@ Software Developer
 ---
 
 ##  Version
-v1 – Core backend features completed (Auth, Products, Wishlist, Cart)
+v1 – Core backend features completed  
+(Auth, Products, Wishlist, Cart, Orders)
