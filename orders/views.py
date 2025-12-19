@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from cart.models import Cart
 from .models import Order, OrderItem
 from .serializers import OrderSerializer
+from rest_framework.decorators import api_view, permission_classes
 
 
 class CreateOrderView(APIView):
@@ -41,3 +42,19 @@ class MyOrdersView(APIView):
         orders = Order.objects.filter(user=request.user).order_by("-created_at")
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def cancel_order(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id, user=request.user)
+
+        if order.status == "PAID":
+            return Response({"error": "Paid orders cannot be cancelled"}, status=400)
+
+        order.status = "CANCELLED"
+        order.save()
+        return Response({"message": "Order cancelled"})
+    except Order.DoesNotExist:
+        return Response({"error": "Order not found"}, status=404)

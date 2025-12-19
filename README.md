@@ -1,47 +1,52 @@
 # NovaCart – Backend (v1)
 
 NovaCart is a backend REST API for an e-commerce application, built using Django Rest Framework.  
-This project follows an API-first approach and focuses on clean, scalable backend architecture.
+The project follows an API-first approach and focuses on clean, scalable, production-style backend architecture.
 
-##  Live API
+## Live API
 https://novacart-backend-bnnb.onrender.com
 
 > Deployed on Render free tier (cold start may occur on first request)
 
 ---
 
-##  Tech Stack
+## Tech Stack
 - Python
 - Django
 - Django Rest Framework (DRF)
 - JWT Authentication (SimpleJWT)
+- Stripe (PaymentIntents + Webhooks)
 - Postman (API Testing)
 - SQLite (development / free-tier deployment)
 - Render (Backend deployment)
 
 ---
 
-##  Features (v1)
+## Features (v1)
 - User authentication using JWT
 - Product listing and product detail APIs
 - Wishlist functionality
 - Cart functionality (Add / Update / Remove / Fetch)
-- **Orders management (Cart → Order conversion)**
-- Admin panel for managing data
+- Orders management (Cart → Order conversion)
+- Secure payment processing using Stripe PaymentIntents
+- Webhook-based asynchronous payment confirmation
+- Order lifecycle management (PENDING → PAID → CANCELLED)
+- Order cancellation (allowed only before payment)
+- Admin panel for managing products, orders, and payments
 - Password reset via email
 - RESTful API design
 
 ---
 
-##  API Endpoints
+## API Endpoints
 
-###  Authentication
+### Authentication
 - `POST /api/token/`
 - `POST /api/token/refresh/`
 
 ---
 
-###  Products
+### Products
 - `GET /api/products/`
 - `POST /api/products/`
 - `GET /api/products/<id>/`
@@ -50,14 +55,14 @@ https://novacart-backend-bnnb.onrender.com
 
 ---
 
-###  Wishlist
+### Wishlist
 - `POST /api/products/wishlist/`
 - `GET /api/products/wishlist/`
 - `DELETE /api/products/wishlist/<id>/`
 
 ---
 
-###  Cart
+### Cart  
 > All cart endpoints require JWT authentication
 
 - `POST /api/cart/add/`  
@@ -74,7 +79,7 @@ https://novacart-backend-bnnb.onrender.com
 
 ---
 
-###  Orders
+### Orders  
 > All order endpoints require JWT authentication
 
 - `POST /api/orders/create/`  
@@ -83,34 +88,58 @@ https://novacart-backend-bnnb.onrender.com
 - `GET /api/orders/my/`  
   Fetch logged-in user’s order history
 
+- `POST /api/orders/cancel/<order_id>/`  
+  Cancel an order (only allowed when status is PENDING)
+
 ---
 
-##  Project Status
+### Payments  
+> Payment confirmation handled asynchronously via Stripe webhooks
+
+- `POST /api/payments/payment-intent/`  
+  Create Stripe PaymentIntent for an order
+
+- `POST /api/payments/webhook/`  
+  Stripe webhook endpoint to confirm payment and update order status
+
+---
+
+## Order Lifecycle
+- `PENDING` → Order created, payment not completed
+- `PAID` → Payment confirmed via Stripe webhook
+- `CANCELLED` → Order cancelled before payment
+
+Paid orders cannot be cancelled. Refund functionality will be added in a future version.
+
+---
+
+## Project Status
 This project is under active development.
 
 ### Planned Features
-- Checkout flow
-- Payment integration (Razorpay / Stripe)
-- Frontend UI (React)
+- Refund handling using Stripe Refund API
+- Checkout UI (React)
 - Persistent production database (PostgreSQL)
 - Deployment hardening (DEBUG=False, env-based config)
+- Enhanced order status tracking (Processing, Shipped, Delivered)
 
 ---
 
-##  Notes
+## Notes
 - SQLite is used for learning and free-tier deployment purposes
 - Data may reset on instance restart due to hosting limitations
 - Backend is API-only; frontend consumes these endpoints
-- JWT authentication is required for protected routes
+- JWT authentication is required for all protected routes
+- Stripe secrets and webhook keys are managed via environment variables
 
 ---
 
-##  Author
+## Author
 **Arun**  
 Software Developer
 
 ---
 
-##  Version
-v1 – Core backend features completed  
-(Auth, Products, Wishlist, Cart, Orders)
+## Version
+v1 – Core backend completed  
+(Auth, Products, Wishlist, Cart, Orders, Payments, Webhooks, Order Cancellation)
