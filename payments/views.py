@@ -1,6 +1,7 @@
 import stripe
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -34,7 +35,7 @@ def create_payment_intent(request):
         },
     )
 
-    # PAYMENT RECORD 
+    # PAYMENT RECORD
     Payment.objects.update_or_create(
         order=order,
         defaults={
@@ -85,6 +86,35 @@ def stripe_webhook(request):
             )
 
         except Exception as e:
-            return HttpResponse(status=500)  
+            return HttpResponse(status=500)
 
     return HttpResponse(status=200)
+
+
+class RefundOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.get(id=order_id, user=request.user)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found"}, status=404)
+
+        if order.status != "PAID":
+            return Response({"error": "Only paid orders can be refunded"}, status=400)
+
+        try:
+            payment = order.payment
+        except Payment.DoesNotExist:
+            return Response({"error": "Payment record missing"}, status=400)
+
+        # Stripe Refund
+        stripe.Refund.create(payment_intent=payment.stripe_payment_intent)
+
+        payment.status = "REFUNDED"
+        payment.save()
+
+        order.status = "REFUNDED"
+        order.save()
+
+        return Response({"message": "Refund Successful"})

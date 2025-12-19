@@ -6,6 +6,7 @@ class Payment(models.Model):
     STATUS_CHOICES = (
         ("CREATED", "Created"),
         ("SUCCEEDED", "Succeeded"),
+        ("REFUNDED", "Refunded"),
         ("FAILED", "Failed"),
     )
 
