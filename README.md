@@ -11,16 +11,141 @@ https://novacart-backend-bnnb.onrender.com
 ---
 
 ## Tech Stack
-- Python
+- Python 3
 - Django
 - Django Rest Framework (DRF)
 - JWT Authentication (SimpleJWT)
 - Stripe (PaymentIntents + Webhooks)
-- Postman (API Testing)
+- Cloudinary – Media storage (Product images)
 - SQLite (development / free-tier deployment)
 - Render (Backend deployment)
+- Postman (API Testing)
 
 ---
+
+## Media Storage (Product Images)
+Product images are stored in **Cloudinary**, not in local /media folder.
+
+Benefits:
+- CDN delivery (very fast globally)
+- persists even when server sleeps
+- ideal for Render free tier
+
+Django uses:
+
+- cloudinary
+- django-cloudinary-storage
+
+Images are uploaded through Django Admin.
+
+## Environment Variables
+
+Create a `.env` file in the backend root and add:
+
+- SECRET_KEY=your_django_secret
+- DEBUG=False
+- ALLOWED_HOSTS=your-domain.com,localhost
+
+### Email
+- EMAIL_HOST_USER=your_email
+- EMAIL_HOST_PASSWORD=your_email_password
+
+### Stripe
+- STRIPE_SECRET_KEY=your_key
+- STRIPE_WEBHOOK_SECRET=your_key
+
+### Cloudinary
+- CLOUDINARY_CLOUD_NAME=xxx
+- CLOUDINARY_API_KEY=xxx
+- CLOUDINARY_API_SECRET=xxx
+
+> Never commit `.env` to GitHub. It must stay private.
+
+## How to Run Locally
+1. Clone the Repo
+```
+git clone https://github.com/arunsabu21/novacart-backend.git
+cd backend
+```
+2. Create virtual environment
+```
+python -m venv venv
+```
+3. Activate environment
+```
+Windows:
+
+venv\Scripts\activate
+
+
+Mac / Linux:
+
+source venv/bin/activate
+```
+4. Install dependencies
+```
+pip install -r requirements.txt
+```
+5. Apply migrations
+```
+python manage.py migrate
+```
+6. Run server
+```
+python manage.py runserver
+```
+
+
+
+## Project Structure
+```
+backend/
+├── backend/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+│
+├── users/
+│   ├── migrations/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   └── urls.py
+│
+├── products/
+│   ├── migrations/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   └── urls.py
+│
+├── cart/
+│   ├── migrations/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   └── urls.py
+│
+├── orders/
+│   ├── migrations/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   └── urls.py
+│
+├── payments/
+│   ├── migrations/
+│   ├── models.py
+│   ├── views.py
+│   └── urls.py
+│
+├── media/           # Local media (development) – Cloudinary used in production
+├── staticfiles/     # Collected static files
+├── manage.py
+└── requirements.txt
+```
 
 ## Features (v1)
 - User authentication using JWT
@@ -35,6 +160,7 @@ https://novacart-backend-bnnb.onrender.com
 - Admin panel for managing products, orders, and payments
 - Password reset via email
 - RESTful API design
+- Cloudinary media storage for uploaded images
 
 ---
 
@@ -43,6 +169,10 @@ https://novacart-backend-bnnb.onrender.com
 ### Authentication
 - `POST /api/token/`
 - `POST /api/token/refresh/`
+### Token Lifetime (Simple JWT)
+- Access Token: 60 minutes
+- Refresh Token: 7 days
+> Configured in settings.py.
 
 ---
 
@@ -126,7 +256,7 @@ This project is under active development.
 ---
 
 ## Notes
-- SQLite is used for learning and free-tier deployment purposes
+- SQLite (development & free-tier deployment – switching to PostgreSQL soon)
 - Data may reset on instance restart due to hosting limitations
 - Backend is API-only; frontend consumes these endpoints
 - JWT authentication is required for all protected routes
@@ -135,8 +265,8 @@ This project is under active development.
 ---
 
 ## Author
-**Arun**  
-Software Developer
+**Arun Sabu**  
+Backend Developer (Django / DRF)
 
 ---
 
