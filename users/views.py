@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from .serializers import RegisterSerializer, ProfileSerializer
 from rest_framework import status
 from rest_framework.views import APIView
+from django_rest_passwordreset.models import ResetPasswordToken
+from rest_framework.decorators import api_view
 
 
 class RegisterView(generics.CreateAPIView):
@@ -31,3 +33,24 @@ class UpdateProfileView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(["POST"])
+def password_reset_confirm(request):
+    token = request.data.get("token")
+    password = request.data.get("password")
+    
+    if not token or password:
+        return Response({"detail": "Missing token or password"}, status=400)
+    
+    try:
+        reset_token = ResetPasswordToken.objects.get(key=token)
+    except ResetPasswordToken.DoesNotExist:
+        return Response({"detail": "Invalid or token expired"}, status=400)
+    
+    user = reset_token.user
+    user.set_password(password)
+    user.save()
+    
+    reset_token.delete()
+    
+    return Response({"detail": "Password Reset Successful"}, status=200)
