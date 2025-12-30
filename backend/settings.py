@@ -19,8 +19,25 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "https://your-frontend-domain.com",
 ]
+
+# Only for Development
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
 
 CSRF_TRUSTED_ORIGINS = [
     "https://novacart-backend-bnnb.onrender.com",
@@ -36,11 +53,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "rest_framework",
     "corsheaders",
     "django_rest_passwordreset",
-
     "users.apps.UsersConfig",
     "products",
     "cart",
@@ -50,7 +65,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
 ]
 
-#Cloudinary Storage
+# Cloudinary Storage
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
@@ -104,7 +119,9 @@ DATABASES = {
 # ---------- PASSWORD VALIDATION ----------
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -175,11 +192,9 @@ else:
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),   #  access token valid 1 hour
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),      #  refresh token valid 7 days
-
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),  #  access token valid 1 hour
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  #  refresh token valid 7 days
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
