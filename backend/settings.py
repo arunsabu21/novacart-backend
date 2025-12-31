@@ -169,6 +169,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
+# -----------Email Service-------------
+
+import resend
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+resend.api_key = RESEND_API_KEY
+
 # ---------- STRIPE ----------
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")

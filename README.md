@@ -15,6 +15,7 @@ https://novacart-backend-bnnb.onrender.com
 - Django
 - Django Rest Framework (DRF)
 - JWT Authentication (SimpleJWT)
+- Resend – transactional emails (password reset)
 - Stripe (PaymentIntents + Webhooks)
 - Cloudinary – Media storage (Product images)
 - SQLite (development / free-tier deployment)
