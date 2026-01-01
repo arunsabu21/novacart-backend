@@ -38,19 +38,21 @@ class UpdateProfileView(APIView):
 def password_reset_confirm(request):
     token = request.data.get("token")
     password = request.data.get("password")
-    
-    if not token or password:
+
+    # FIXED CONDITION
+    if not token or not password:
         return Response({"detail": "Missing token or password"}, status=400)
-    
+
     try:
         reset_token = ResetPasswordToken.objects.get(key=token)
     except ResetPasswordToken.DoesNotExist:
         return Response({"detail": "Invalid or token expired"}, status=400)
-    
+
     user = reset_token.user
     user.set_password(password)
     user.save()
-    
+
     reset_token.delete()
-    
+
     return Response({"detail": "Password Reset Successful"}, status=200)
+
