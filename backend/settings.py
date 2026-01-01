@@ -13,7 +13,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", ".onrender.com,localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = ["*"]
 
 # ---------- CORS & CSRF ----------
 
@@ -21,6 +21,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://your-frontend-domain.com",
+    "https://novacart-backend-staging.onrender.com",
 ]
 
 # Only for Development
