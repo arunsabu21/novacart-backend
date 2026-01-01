@@ -31,7 +31,6 @@ def home(request):
 urlpatterns = [
     path("", home),
     path('admin/', admin.site.urls),
-    path("api/create-temp-admin/", create_temp_admin),
 
     # ✅ JWT AUTH (LOGIN + REFRESH)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
