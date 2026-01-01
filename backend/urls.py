@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.http import HttpResponse
-from users.views import create_temp_admin
+
 
 def home(request):
     return HttpResponse("NovaCart API is running 🚀")
@@ -30,7 +30,6 @@ def home(request):
 urlpatterns = [
     path("", home),
     path('admin/', admin.site.urls),
-    path('api/create-temp-admin/', create_temp_admin),
     # ✅ JWT AUTH (LOGIN + REFRESH)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
