@@ -8,12 +8,30 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django_rest_passwordreset.models import ResetPasswordToken
 from rest_framework.decorators import api_view
+import traceback
 
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            print("REGISTER ERROR ------------------------")
+            print(e)
+            traceback.print_exc()
+
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class UserProfileView(APIView):
