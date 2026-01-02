@@ -10,6 +10,7 @@ venv/
 
 # Database
 db.sqlite3
+db_sqlite3
 
 # Media files 
 media/

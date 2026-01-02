@@ -110,13 +110,23 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 import dj_database_url
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
+if os.getenv("RENDER") == "true":
+    # PRODUCTION - Render PostgreSQL
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=os.getenv("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # LOCAL DEV - SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db_sqlite3",
+        }
+    }
 
 # (Later  switch to Postgres)
 
