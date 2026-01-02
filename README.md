@@ -1,276 +1,233 @@
-# NovaCart – Backend (v1)
+# NovaCart — Backend (v1) 
 
-NovaCart is a backend REST API for an e-commerce application, built using Django Rest Framework.  
-The project follows an API-first approach and focuses on clean, scalable, production-style backend architecture.
+A production-style REST API for an e-commerce application built with Django & Django REST Framework (DRF). The backend follows an API-first approach and implements real-world workflows including authentication, products, cart, orders, Stripe payments, and webhooks.
 
-## Live API
+---
+
+## Table of contents 
+
+- [Live API](#live-api)
+- [Tech stack](#tech-stack)
+- [Getting started](#getting-started)
+- [Environment variables](#environment-variables)
+- [Run locally](#run-locally)
+- [Project structure](#project-structure)
+- [Main features](#main-features)
+- [API overview](#api-overview)
+- [Order lifecycle](#order-lifecycle)
+- [Deployment notes](#deployment-notes)
+- [Author & License](#author--license)
+
+---
+
+## Live API 
+
+The public demo is available at:
+
 https://novacart-backend-bnnb.onrender.com
 
-> Deployed on Render free tier (cold start may occur on first request)
+(Hosted on Render — first request may have a cold start.)
 
 ---
 
-## Tech Stack
-- Python 3
+## Tech stack 
+
+- Python 3.10+ (recommended)
 - Django
-- Django Rest Framework (DRF)
-- JWT Authentication (SimpleJWT)
-- Resend – transactional emails (password reset)
-- Stripe (PaymentIntents + Webhooks)
-- Cloudinary – Media storage (Product images)
-- SQLite (development / free-tier deployment)
-- Render (Backend deployment)
-- Postman (API Testing)
+- Django REST Framework
+- Simple JWT for authentication
+- PostgreSQL (production)
+- SQLite (local testing)
+- Stripe (payments & webhooks)
+- Cloudinary (product images)
+- Render (deployment)
 
 ---
 
-## Media Storage (Product Images)
-Product images are stored in **Cloudinary**, not in local /media folder.
+## Getting started 
 
-Benefits:
-- CDN delivery (very fast globally)
-- persists even when server sleeps
-- ideal for Render free tier
+Clone the repo and open the `backend/` folder to work on the API only.
 
-Django uses:
-
-- cloudinary
-- django-cloudinary-storage
-
-Images are uploaded through Django Admin.
-
-## Environment Variables
-
-Create a `.env` file in the backend root and add:
-
-- SECRET_KEY=your_django_secret
-- DEBUG=False
-- ALLOWED_HOSTS=your-domain.com,localhost
-
-### Email
-- EMAIL_HOST_USER=your_email
-- EMAIL_HOST_PASSWORD=your_email_password
-
-### Stripe
-- STRIPE_SECRET_KEY=your_key
-- STRIPE_WEBHOOK_SECRET=your_key
-
-### Cloudinary
-- CLOUDINARY_CLOUD_NAME=xxx
-- CLOUDINARY_API_KEY=xxx
-- CLOUDINARY_API_SECRET=xxx
-
-> Never commit `.env` to GitHub. It must stay private.
-
-## How to Run Locally
-1. Clone the Repo
-```
+```bash
 git clone https://github.com/arunsabu21/novacart-backend.git
 cd backend
 ```
-2. Create virtual environment
-```
-python -m venv venv
-```
-3. Activate environment
-```
+
+Create and activate a virtual environment:
+
 Windows:
-
+```powershell
+python -m venv venv
 venv\Scripts\activate
+```
 
-
-Mac / Linux:
-
+macOS / Linux:
+```bash
+python -m venv venv
 source venv/bin/activate
 ```
-4. Install dependencies
-```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
-5. Apply migrations
-```
+
+Apply migrations and (optionally) create a superuser:
+
+```bash
 python manage.py migrate
+python manage.py createsuperuser
 ```
-6. Run server
-```
+
+Run the local development server:
+
+```bash
 python manage.py runserver
 ```
 
+Run tests:
 
-
-## Project Structure
-```
-backend/
-├── backend/
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-│
-├── users/
-│   ├── migrations/
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   └── urls.py
-│
-├── products/
-│   ├── migrations/
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   └── urls.py
-│
-├── cart/
-│   ├── migrations/
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   └── urls.py
-│
-├── orders/
-│   ├── migrations/
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   └── urls.py
-│
-├── payments/
-│   ├── migrations/
-│   ├── models.py
-│   ├── views.py
-│   └── urls.py
-│
-├── media/           # Local media (development) – Cloudinary used in production
-├── staticfiles/     # Collected static files
-├── manage.py
-└── requirements.txt
+```bash
+python manage.py test
 ```
 
-## Features (v1)
-- User authentication using JWT
-- Product listing and product detail APIs
-- Wishlist functionality
-- Cart functionality (Add / Update / Remove / Fetch)
-- Orders management (Cart → Order conversion)
-- Secure payment processing using Stripe PaymentIntents
-- Webhook-based asynchronous payment confirmation
-- Order lifecycle management (PENDING → PAID → CANCELLED)
-- Order cancellation (allowed only before payment)
-- Admin panel for managing products, orders, and payments
+---
+
+## Environment variables 
+
+Create a `.env` file in the `backend/` root and add (examples):
+
+```env
+# Django
+SECRET_KEY=your_django_secret
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Database (Postgres production example)
+POSTGRES_DB=novacart
+POSTGRES_USER=novacart_user
+POSTGRES_PASSWORD=securepassword
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+# Email (Resend or SMTP)
+EMAIL_HOST_USER=your@example.com
+EMAIL_HOST_PASSWORD=email_password
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=xxx
+CLOUDINARY_API_KEY=xxx
+CLOUDINARY_API_SECRET=xxx
+```
+
+ **Never** commit `.env` or other secrets into version control.
+
+---
+
+## Project structure 
+
+Top-level folders in `backend/`:
+
+- `backend/` — Django project settings
+- `users/` — user model & auth
+- `products/` — product models & APIs
+- `cart/` — cart management
+- `orders/` — order workflows
+- `payments/` — Stripe integration & webhooks
+- `media/`, `staticfiles/`
+- `manage.py`, `requirements.txt`
+
+Each app follows standard Django layout: `models`, `serializers`, `views`, `urls`, `migrations`.
+
+---
+
+## Main features 
+
+- JWT-based authentication
+- Product listing & detail APIs
+- Wishlist management
+- Cart operations (add, remove, update qty, fetch)
+- Order creation from cart, order history, cancel before payment
+- Stripe PaymentIntent + webhook confirmation
+- Admin dashboard for managing products, orders, users
 - Password reset via email
-- RESTful API design
-- Cloudinary media storage for uploaded images
+- Media stored on Cloudinary (CDN-friendly)
 
 ---
 
-## API Endpoints
+## API overview 
 
-### Authentication
-- `POST /api/token/`
-- `POST /api/token/refresh/`
-### Token Lifetime (Simple JWT)
-- Access Token: 60 minutes
-- Refresh Token: 7 days
-> Configured in settings.py.
+Authentication
+- `POST /api/token/` — obtain access & refresh tokens
+- `POST /api/token/refresh/` — refresh access token
 
----
+Products
+- `GET /api/products/` — list products
+- `POST /api/products/` — create product (admin)
+- `GET /api/products/<id>/` — retrieve
+- `PUT /api/products/<id>/` — update (admin)
+- `DELETE /api/products/<id>/` — delete (admin)
 
-### Products
-- `GET /api/products/`
-- `POST /api/products/`
-- `GET /api/products/<id>/`
-- `PUT /api/products/<id>/`
-- `DELETE /api/products/<id>/`
-
----
-
-### Wishlist
+Wishlist
 - `POST /api/products/wishlist/`
 - `GET /api/products/wishlist/`
 - `DELETE /api/products/wishlist/<id>/`
 
----
+Cart (authenticated)
+- `POST /api/cart/add/` — add item
+- `GET /api/cart/` — view cart
+- `PATCH /api/cart/update/<cart_id>/` — update quantity
+- `DELETE /api/cart/remove/<cart_id>/` — remove
 
-### Cart  
-> All cart endpoints require JWT authentication
+Orders (authenticated)
+- `POST /api/orders/create/` — create order from cart
+- `GET /api/orders/my/` — user orders
+- `POST /api/orders/cancel/<order_id>/` — cancel (pre-payment)
 
-- `POST /api/cart/add/`  
-  Add a product to cart or increase quantity
+Payments
+- `POST /api/payments/payment-intent/` — create Stripe PaymentIntent
+- `POST /api/payments/webhook/` — Stripe webhook endpoint
 
-- `GET /api/cart/`  
-  Fetch logged-in user’s cart items
-
-- `PATCH /api/cart/update/<cart_id>/`  
-  Increase or decrease item quantity
-
-- `DELETE /api/cart/remove/<cart_id>/`  
-  Remove item from cart
-
----
-
-### Orders  
-> All order endpoints require JWT authentication
-
-- `POST /api/orders/create/`  
-  Create an order from cart items (clears cart after success)
-
-- `GET /api/orders/my/`  
-  Fetch logged-in user’s order history
-
-- `POST /api/orders/cancel/<order_id>/`  
-  Cancel an order (only allowed when status is PENDING)
+Token lifetimes: Access token ~60 minutes; Refresh token ~7 days (configured via SimpleJWT).
 
 ---
 
-### Payments  
-> Payment confirmation handled asynchronously via Stripe webhooks
+## Order lifecycle 
 
-- `POST /api/payments/payment-intent/`  
-  Create Stripe PaymentIntent for an order
+- `PENDING` — created, awaiting payment
+- `PAID` — payment confirmed via webhook
+- `CANCELLED` — cancelled before payment
 
-- `POST /api/payments/webhook/`  
-  Stripe webhook endpoint to confirm payment and update order status
-
----
-
-## Order Lifecycle
-- `PENDING` → Order created, payment not completed
-- `PAID` → Payment confirmed via Stripe webhook
-- `CANCELLED` → Order cancelled before payment
-
-Paid orders cannot be cancelled. Refund functionality will be added in a future version.
+(Refund support is planned for future releases.)
 
 ---
 
-## Project Status
-This project is under active development.
+## Deployment notes 
 
-### Planned Features
-- Refund handling using Stripe Refund API
-- Checkout UI (React)
-- Persistent production database (PostgreSQL)
-- Deployment hardening (DEBUG=False, env-based config)
-- Enhanced order status tracking (Processing, Shipped, Delivered)
+- Production uses PostgreSQL and Cloudinary for persistent media.
+- The public demo is hosted on Render; free-tier instances may sleep (cold start) and can reset data.
+- Store all secrets in environment variables or a secrets manager.
+- Consider adding monitoring and automated backups for production DB.
 
 ---
 
-## Notes
-- SQLite (development & free-tier deployment – switching to PostgreSQL soon)
-- Data may reset on instance restart due to hosting limitations
-- Backend is API-only; frontend consumes these endpoints
-- JWT authentication is required for all protected routes
-- Stripe secrets and webhook keys are managed via environment variables
+## Contributing & Support 
+
+Contributions are welcome. Please open issues or PRs against the repository and follow standard GitHub contribution practices.
 
 ---
 
-## Author
-**Arun Sabu**  
-Backend Developer (Django / DRF)
+## Author & Version 
+
+**Arun Sabu** — Backend Developer (Django / DRF)
+
+**Version:** v1 — Core backend completed (Auth, Products, Wishlist, Cart, Orders, Payments, Webhooks).
 
 ---
 
-## Version
-v1 – Core backend completed  
-(Auth, Products, Wishlist, Cart, Orders, Payments, Webhooks, Order Cancellation)
+
