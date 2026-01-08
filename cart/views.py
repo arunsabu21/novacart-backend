@@ -2,30 +2,34 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Cart
-from products.models import Book
+from products.models import Book, Wishlist
 from .serializers import CartSerializer
+from django.views.decorators.csrf import csrf_exempt
 
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_to_cart(request):
-    product_id = request.data.get("book_id")
+    book_id = request.data.get("book_id")
 
-    if not product_id:
+    if not book_id:
         return Response({"error": "book_id required"}, status=400)
 
     try:
-        product = Book.objects.get(id=product_id)
+        book = Book.objects.get(id=book_id)
     except Book.DoesNotExist:
         return Response({"error": "Book not found"}, status=404)
 
-    cart_item = Cart.objects.filter(user=request.user, product=product).first()
+    cart_item = Cart.objects.filter(user=request.user, product=book).first()
 
     if cart_item:
         cart_item.quantity += 1
         cart_item.save()
     else:
-        Cart.objects.create(user=request.user, product=product, quantity=1)
+        Cart.objects.create(user=request.user, product=book, quantity=1)
+
+    Wishlist.objects.filter(user=request.user, book=book).delete()
 
     return Response({"message": "Added to cart"})
 
