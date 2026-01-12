@@ -5,6 +5,7 @@ from .models import Cart
 from products.models import Book, Wishlist
 from .serializers import CartSerializer
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
 
 
 @csrf_exempt
@@ -78,3 +79,71 @@ def update_quantity(request, cart_id):
         return Response({"error": "Invalid action"}, status=400)
 
     return Response({"message": "Quantity Updated"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def bulk_delete_cart(request):
+    cart_ids = request.data.get("cart_ids", [])
+
+    if not cart_ids:
+        return Response(
+            {"error": "cart_ids is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    deleted, _ = Cart.objects.filter(
+        id__in=cart_ids,
+        user=request.user,
+    ).delete()
+
+    return Response(
+        {"message": f"{deleted} items removed from bag"}, status=status.HTTP_200_OK
+    )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def bulk_move_to_wishlist(request):
+    cart_ids = request.data.get("cart_ids", [])
+
+    if not cart_ids:
+        return Response(
+            {"error": "cart_ids required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    cart_items = Cart.objects.filter(
+        id__in=cart_ids,
+        user=request.user,
+    ).select_related("product")
+
+    if not cart_items.exists():
+        return Response(
+            {"error": "No valid cart items"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    moved = 0
+    skipped = 0
+
+    for item in cart_items:
+        _, created = Wishlist.objects.get_or_create(
+            user=request.user,
+            book=item.product,
+        )
+        if created:
+            moved += 1
+        else:
+            skipped += 1
+
+    # delete AFTER loop
+    cart_items.delete()
+
+    return Response(
+        {
+            "added_to_wishlist": moved,
+            "already_in_wishlist": skipped,
+            "message": f"{moved} added, {skipped} already existed",
+        },
+        status=status.HTTP_200_OK,
+    )
