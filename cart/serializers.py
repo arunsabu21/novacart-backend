@@ -10,6 +10,10 @@ class CartSerializer(serializers.ModelSerializer):
     )
     product_image = serializers.ImageField(source="product.image", read_only=True)
     total_price = serializers.SerializerMethodField()
+    stock = serializers.IntegerField(
+        source="product.stock",
+        read_only=True
+    )
 
     class Meta:
         model = Cart
@@ -21,6 +25,7 @@ class CartSerializer(serializers.ModelSerializer):
             "product_price",
             "product_image",
             "quantity",
+            "stock",
             "total_price",
         ]
 

@@ -42,6 +42,7 @@ https://novacart-backend-bnnb.onrender.com
 - Stripe (payments & webhooks)
 - Cloudinary (product images)
 - Render (deployment)
+- GitHub Actions (CI pipeline)
 
 ---
 

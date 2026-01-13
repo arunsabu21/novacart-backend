@@ -24,7 +24,18 @@ def add_to_cart(request):
 
     cart_item = Cart.objects.filter(user=request.user, product=book).first()
 
+    # STOCK CHECK
+    if book.stock <= 0:
+        return Response({"error": "Out of stock"}, status=status.HTTP_400_BAD_REQUEST)
+
     if cart_item:
+        # MAX LIMIT CHECK
+        if cart_item.quantity >= min(book.stock, 10):
+            return Response(
+                {"error": "Maximum quantity limit reached"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         cart_item.quantity += 1
         cart_item.save()
     else:
@@ -32,7 +43,7 @@ def add_to_cart(request):
 
     Wishlist.objects.filter(user=request.user, book=book).delete()
 
-    return Response({"message": "Added to cart"})
+    return Response({"message": "Added to cart"}, status=200)
 
 
 @api_view(["GET"])
@@ -64,7 +75,16 @@ def update_quantity(request, cart_id):
     except Cart.DoesNotExist:
         return Response({"error": "Item not found"}, status=404)
 
+    product = cart_item.product
+
     if action == "increase":
+        # MAX + STOCK CHECK
+        if cart_item.quantity >= min(product.stock, 10):
+            return Response(
+                {"error": "Maximum quantity limit reached"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         cart_item.quantity += 1
         cart_item.save()
 
@@ -74,11 +94,14 @@ def update_quantity(request, cart_id):
             cart_item.save()
         else:
             cart_item.delete()
-            return Response({"message": "Item Removed from cart"})
+            return Response({"message": "Item removed from cart"}, status=200)
+
     else:
         return Response({"error": "Invalid action"}, status=400)
 
-    return Response({"message": "Quantity Updated"})
+    return Response(
+        {"message": "Quantity updated", "quantity": cart_item.quantity}, status=200
+    )
 
 
 @api_view(["POST"])
