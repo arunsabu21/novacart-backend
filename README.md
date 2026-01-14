@@ -209,6 +209,13 @@ Token lifetimes: Access token ~60 minutes; Refresh token ~7 days (configured via
 
 ---
 
+## Future Improvements
+
+- User address management
+- Order invoice generation (PDF)
+- Refund & return workflow
+- Caching frequently accessed APIs (products, cart)
+
 ## Deployment notes 
 
 - Production uses PostgreSQL and Cloudinary for persistent media.
