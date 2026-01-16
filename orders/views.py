@@ -5,6 +5,8 @@ from cart.models import Cart
 from .models import Order, OrderItem
 from .serializers import OrderSerializer
 from rest_framework.decorators import api_view, permission_classes
+from .utils import get_estimated_delivery
+from django.utils import timezone
 
 
 class CreateOrderView(APIView):
@@ -58,3 +60,9 @@ def cancel_order(request, order_id):
         return Response({"message": "Order cancelled"})
     except Order.DoesNotExist:
         return Response({"error": "Order not found"}, status=404)
+    
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def delivery_estimate_preview(request):
+    estimated = get_estimated_delivery(timezone.now().date())
+    return Response({"estimated_delivery": estimated})

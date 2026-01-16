@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Cart
+from django.utils import timezone
+from orders.utils import get_estimated_delivery
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -10,10 +12,8 @@ class CartSerializer(serializers.ModelSerializer):
     )
     product_image = serializers.ImageField(source="product.image", read_only=True)
     total_price = serializers.SerializerMethodField()
-    stock = serializers.IntegerField(
-        source="product.stock",
-        read_only=True
-    )
+    stock = serializers.IntegerField(source="product.stock", read_only=True)
+    estimated_delivery = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
@@ -27,6 +27,7 @@ class CartSerializer(serializers.ModelSerializer):
             "quantity",
             "stock",
             "total_price",
+            "estimated_delivery",
         ]
 
     def get_product_subtitle(self, obj):
@@ -34,3 +35,7 @@ class CartSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return obj.product.price * obj.quantity
+
+    def get_estimated_delivery(self, obj):
+        date = get_estimated_delivery(timezone.now().date())
+        return date.strftime("%d %b %y")
