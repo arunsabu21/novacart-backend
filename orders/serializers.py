@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Order, OrderItem
+from .utils import get_estimated_delivery
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -17,6 +18,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    estimated_delivery = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -25,5 +27,9 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_amount",
             "status",
             "created_at",
+            "estimated_delivery",
             "items",
         ]
+
+    def get_estimated_delivery(self, obj):
+        return get_estimated_delivery(obj.created_at).date()
