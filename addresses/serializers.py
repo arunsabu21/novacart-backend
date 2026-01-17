@@ -15,17 +15,23 @@ class AddressSerializer(serializers.ModelSerializer):
             "town",
             "house_number",
             "address",
+            "address_type",
             "is_default",
         ]
 
     def validate_mobile(self, value):
         if not value.isdigit() or len(value) not in [10, 12, 13]:
-            raise
-        serializers.ValidationError("Invalid Mobile Number")
+            raise serializers.ValidationError("Invalid Mobile Number")
         return value
 
     def validate_pincode(self, value):
         if not value.isdigit() or len(value) != 6:
-            raise
-        serializers.ValidationError("Invalid Pincode")
+            raise serializers.ValidationError("Invalid Pincode")
+        return value
+
+    def validate_address_type(self, value):
+        if value not in ["HOME", "OFFICE"]:
+            raise serializers.ValidationError(
+                "Address type must be HOME or OFFICE"
+            )
         return value
