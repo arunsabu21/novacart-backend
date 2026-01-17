@@ -148,6 +148,43 @@ Each app follows standard Django layout: `models`, `serializers`, `views`, `urls
 
 ---
 
+## Backend Architecture
+
+NovaCart follows a modular, API-first backend architecture using Django Rest Framework.
+
+## Architectural Style
+
+- RESTful APIs
+- Stateless authentication using JWT
+- App-based modular design
+- Backend-enforced business rules
+
+## App Responsibilities
+
+- users — authentication, JWT handling, user management
+- products — product catalog, images, wishlist
+- cart — cart state & quantity management
+- orders — order creation, cancellation, lifecycle
+- payments — Stripe PaymentIntent & webhook verification
+- addresses — user addresses (HOME / OFFICE, default address logic)
+
+## Data Flow (Order Example)
+
+1. Client creates order from cart
+2. Backend validates cart items
+3. Order created with PENDING status
+4. Stripe PaymentIntent generated
+5. Stripe webhook confirms payment
+6. Order status updated to PAID
+
+## Design Principles
+
+- Thin views, strong serializers
+- Business rules enforced server-side
+- External services isolated per app
+- Scalable structure for future growth
+
+
 ## Main features 
 
 - JWT-based authentication
