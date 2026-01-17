@@ -150,7 +150,7 @@ Each app follows standard Django layout: `models`, `serializers`, `views`, `urls
 
 ## Backend Architecture
 
-NovaCart follows a modular, API-first backend architecture using Django Rest Framework.
+NovaCart follows a Modular Monolith, API-first backend architecture using Django Rest Framework.
 
 ## Architectural Style
 
