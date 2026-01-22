@@ -5,10 +5,12 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from orders.models import Order
+from orders.models import Order, OrderItem
+from cart.models import Cart
 from django.http import HttpResponse
 from rest_framework.permissions import AllowAny
 from payments.models import Payment
+from django.db import transaction
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -16,37 +18,46 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_payment_intent(request):
-    order_id = request.data.get("order_id")
+    user = request.user
+    address_id = request.data.get("address_id")
 
-    if not order_id:
-        return Response({"error": "Order ID Required"}, status=400)
+    if not address_id:
+        return Response({"error": "Address required"}, status=400)
 
-    order = Order.objects.get(id=order_id, user=request.user)
+    cart_items = Cart.objects.filter(user=user)
+    if not cart_items.exists():
+        return Response({"error": "Cart empty"}, status=400)
 
-    intent = stripe.PaymentIntent.create(
-        amount=int(order.total_amount * 100),
-        currency="inr",
-        automatic_payment_methods={
-            "enabled": True,
-            "allow_redirects": "never",
-        },
-        metadata={
-            "order_id": str(order.id),
-        },
+    total_amount = sum(item.quantity * item.product.price for item in cart_items)
+
+    order = Order.objects.create(
+        user=user,
+        address_id=address_id,
+        payment_method="ONLINE",
+        status="PENDING",
+        total_amount=total_amount,
     )
 
-    # PAYMENT RECORD
-    Payment.objects.update_or_create(
+    intent = stripe.PaymentIntent.create(
+        amount=int(total_amount * 100), 
+        currency="inr",
+        automatic_payment_methods={"enabled": True},
+        metadata={"order_id": str(order.id)},
+    )
+
+    Payment.objects.create(
         order=order,
-        defaults={
-            "stripe_payment_intent": intent.id,
-            "amount": order.total_amount,
-            "status": "CREATED",
-        },
+        stripe_payment_intent=intent.id,
+        amount=total_amount,
+        status="CREATED",
     )
 
     return Response(
-        {"payment_intent_id": intent.id, "client_secret": intent.client_secret}
+        {
+            "client_secret": intent.client_secret,
+            "order_id": order.id, 
+            "amount": total_amount,
+        }
     )
 
 
@@ -58,35 +69,56 @@ def stripe_webhook(request):
 
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            payload,
+            sig_header,
+            settings.STRIPE_WEBHOOK_SECRET,
         )
+    except stripe.error.SignatureVerificationError:
+        return HttpResponse(status=400)
     except Exception as e:
         return HttpResponse(status=400)
+
 
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
         order_id = intent["metadata"].get("order_id")
 
         if not order_id:
-            return HttpResponse(status=400)
+            return HttpResponse(status=200)
 
         try:
-            order = Order.objects.get(id=int(order_id))
+            with transaction.atomic():
+                order = Order.objects.select_for_update().get(
+                    id=int(order_id),
+                    status="PENDING",
+                )
 
-            order.status = "PAID"
-            order.save()
+                cart_items = Cart.objects.filter(user=order.user)
 
-            Payment.objects.update_or_create(
-                order=order,
-                defaults={
-                    "stripe_payment_intent": intent["id"],
-                    "amount": intent["amount"] / 100,
-                    "status": "SUCCEEDED",
-                },
-            )
+                for item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        quantity=item.quantity,
+                        price_at_purchase=item.product.price,
+                    )
 
-        except Exception as e:
-            return HttpResponse(status=500)
+                cart_items.delete()
+
+                order.status = "PAID"
+                order.save()
+
+                Payment.objects.update_or_create(
+                    order=order,
+                    defaults={
+                        "stripe_payment_intent": intent["id"],
+                        "amount": intent["amount"] / 100,
+                        "status": "SUCCEEDED",
+                    },
+                )
+
+        except Order.DoesNotExist:
+            return HttpResponse(status=404)
 
     return HttpResponse(status=200)
 
