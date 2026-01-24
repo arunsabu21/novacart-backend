@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Order Confirmed</title>
+  </head>
+
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f5;
+      font-family: Arial, sans-serif;
+    "
+  >
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding: 20px 12px">
+          <!-- CARD -->
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 600px;
+              background: #ffffff;
+              border-radius: 8px;
+              border: 1px solid #e5e5e5;
+              overflow: hidden;
+            "
+          >
+            <!-- HEADER -->
+            <tr>
+              <td style="padding: 20px; text-align: center">
+                <h2 style="margin: 0; color: #282c3f">
+                  Hello {{ user_name }} 👋
+                </h2>
+                <p style="margin: 6px 0 0; color: #6b7280; font-size: 14px">
+                  Thank you for shopping with <strong>NovaCart</strong>
+                </p>
+              </td>
+            </tr>
+
+            <!-- CONFIRMATION BANNER -->
+            <tr>
+              <td style="background: #03a685; padding: 16px; color: #ffffff">
+                <table cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="28" valign="top">
+                      <!-- SVG TICK -->
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <circle cx="12" cy="12" r="12" fill="#ffffff" />
+                        <path
+                          d="M7 12.5l3 3 7-7"
+                          stroke="#03a685"
+                          stroke-width="2"
+                          fill="none"
+                        />
+                      </svg>
+                    </td>
+
+                    <td style="padding-left: 10px">
+                      <h3 style="margin: 0 0 4px; font-size: 16px">
+                        Order Confirmed
+                      </h3>
+                      <p style="margin: 0; font-size: 13px">
+                        Your order has been placed and is being prepared.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- ACTION BUTTON -->
+            <tr>
+              <td align="center" style="padding: 16px">
+                <a
+                  href="{{ order_url }}"
+                  style="
+                    display: inline-block;
+                    padding: 12px 18px;
+                    background: #ffffff;
+                    border: 1px solid #03a685;
+                    color: #03a685;
+                    text-decoration: none;
+                    font-weight: 600;
+                    border-radius: 4px;
+                    font-size: 14px;
+                  "
+                >
+                  View Order Details
+                </a>
+              </td>
+            </tr>
+
+            <!-- PAYMENT -->
+            <tr>
+              <td style="padding: 12px 20px; border-top: 1px solid #f0f0f0">
+                <p style="margin: 0; font-size: 14px">
+                  <strong>Payment Method:</strong> {{ payment_method }}
+                </p>
+              </td>
+            </tr>
+
+            <!-- ITEMS -->
+            <tr>
+              <td style="padding: 16px 20px">
+                <h4 style="margin: 0 0 12px">Order Items</h4>
+
+                {% for item in items %}
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="margin-bottom: 12px"
+                >
+                  <tr>
+                    <td style="padding-bottom: 8px">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <!-- IMAGE -->
+                          <td width="52" valign="top">
+                            {% if item.image_url %}
+                            <img
+                              src="{{ item.image_url }}"
+                              width="60"
+                              height="60"
+                              style="border-radius: 4px; display: block"
+                              alt="{{ item.product_title }}"
+                            />
+                            {% endif %}
+                          </td>
+
+                          <!-- DETAILS -->
+                          <td style="font-size: 14px; padding-left: 10px">
+                            {{ item.product_title }}<br />
+                            <span style="color: #6b7280">
+                              Qty: {{ item.quantity }} </span
+                            ><br />
+                            <strong>₹{{ item.total_price }}</strong>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                {% endfor %}
+              </td>
+            </tr>
+
+            <!-- PRICE SUMMARY -->
+            <tr>
+              <td style="padding: 16px 20px; border-top: 1px solid #f0f0f0">
+                <table width="100%" style="font-size: 14px">
+                  <tr>
+                    <td>Total MRP</td>
+                    <td align="right">₹{{ total_mrp }}</td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-weight: 600">
+                      {% if payment_method == "COD" %} Amount Payable on
+                      Delivery {% else %} Amount Paid {% endif %}
+                    </td>
+                    <td align="right" style="font-weight: 600">
+                      ₹{{ total_amount }}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- ADDRESS -->
+            <tr>
+              <td style="padding: 16px 20px; border-top: 1px solid #f0f0f0">
+                <h4 style="margin: 0 0 6px">Delivery Address</h4>
+                <p style="margin: 0; font-size: 14px; line-height: 1.5">
+                  {{ address.name }}<br />
+                  {{ address.house_number }}, {{ address.address }}<br />
+                  {{ address.district }}, {{ address.state }} - {{ address.pincode }}<br />
+                  Mobile: {{ address.mobile }}
+                </p>
+              </td>
+            </tr>
+
+            <!-- FOOTER -->
+            <tr>
+              <td
+                style="padding: 14px; background: #fafafa; text-align: center"
+              >
+                <p style="margin: 0; font-size: 12px; color: #6b7280">
+                  Need help? Contact us at support@novacart.com
+                </p>
+              </td>
+            </tr>
+          </table>
+          <!-- END CARD -->
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

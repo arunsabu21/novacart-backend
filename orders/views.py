@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from .utils import get_estimated_delivery
 from django.utils import timezone
 from django.db import transaction
+from .emails import send_order_confirmation_email
 
 
 class CreateOrderView(APIView):
@@ -63,6 +64,7 @@ class CreateOrderView(APIView):
                 )
 
             cart_items.delete()
+            send_order_confirmation_email(order)
 
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
