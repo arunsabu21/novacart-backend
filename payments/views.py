@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from rest_framework.permissions import AllowAny
 from payments.models import Payment
 from django.db import transaction
+from orders.emails import send_order_confirmation_email
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -104,6 +105,7 @@ def stripe_webhook(request):
                     )
 
                 cart_items.delete()
+                send_order_confirmation_email(order)
 
                 order.status = "PAID"
                 order.save()
