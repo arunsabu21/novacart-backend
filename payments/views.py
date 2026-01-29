@@ -1,17 +1,19 @@
 import stripe
 from django.conf import settings
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from orders.models import Order, OrderItem
-from cart.models import Cart
 from django.http import HttpResponse
-from rest_framework.permissions import AllowAny
-from payments.models import Payment
 from django.db import transaction
-from orders.emails import send_order_confirmation_email
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from cart.models import Cart
+from orders.models import Order, OrderItem
+from payments.models import Payment
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -29,7 +31,9 @@ def create_payment_intent(request):
     if not cart_items.exists():
         return Response({"error": "Cart empty"}, status=400)
 
-    total_amount = sum(item.quantity * item.product.price for item in cart_items)
+    total_amount = sum(
+        item.quantity * item.product.price for item in cart_items
+    )
 
     order = Order.objects.create(
         user=user,
@@ -40,7 +44,7 @@ def create_payment_intent(request):
     )
 
     intent = stripe.PaymentIntent.create(
-        amount=int(total_amount * 100),
+        amount=int(total_amount * 100),  # paise
         currency="inr",
         automatic_payment_methods={"enabled": True},
         metadata={"order_id": str(order.id)},
@@ -53,19 +57,15 @@ def create_payment_intent(request):
         status="CREATED",
     )
 
-    return Response(
-        {
-            "client_secret": intent.client_secret,
-            "order_id": order.id,
-            "amount": total_amount,
-        }
-    )
+    return Response({
+        "client_secret": intent.client_secret,
+        "amount": total_amount,
+    })
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def stripe_webhook(request):
-
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
 
@@ -77,21 +77,21 @@ def stripe_webhook(request):
         )
     except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
-    except Exception as e:
+    except Exception:
         return HttpResponse(status=400)
 
-    # Respond FAST for Stripe
+    # ✅ ACK STRIPE IMMEDIATELY
+    response = HttpResponse(status=200)
+
     if event["type"] == "payment_intent.succeeded":
         handle_payment_intent_succeeded(event)
 
-    return HttpResponse(status=200)
+    return response
 
 
 def handle_payment_intent_succeeded(event):
     intent = event["data"]["object"]
     order_id = intent["metadata"].get("order_id")
-
-    print("Stripe payment success for order:", order_id)
 
     if not order_id:
         return
@@ -116,7 +116,6 @@ def handle_payment_intent_succeeded(event):
                     price_at_purchase=item.product.price,
                 )
 
-            # delete cart AFTER loop
             cart_items.delete()
 
             order.status = "PAID"
@@ -132,7 +131,7 @@ def handle_payment_intent_succeeded(event):
             )
 
     except Order.DoesNotExist:
-        print("Order not found or already processed")
+        # already processed → ignore
         return
 
 
