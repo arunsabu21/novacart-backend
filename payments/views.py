@@ -40,7 +40,7 @@ def create_payment_intent(request):
     )
 
     intent = stripe.PaymentIntent.create(
-        amount=int(total_amount * 100), 
+        amount=int(total_amount * 100),
         currency="inr",
         automatic_payment_methods={"enabled": True},
         metadata={"order_id": str(order.id)},
@@ -56,7 +56,7 @@ def create_payment_intent(request):
     return Response(
         {
             "client_secret": intent.client_secret,
-            "order_id": order.id, 
+            "order_id": order.id,
             "amount": total_amount,
         }
     )
@@ -65,6 +65,7 @@ def create_payment_intent(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def stripe_webhook(request):
+
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
 
@@ -79,50 +80,60 @@ def stripe_webhook(request):
     except Exception as e:
         return HttpResponse(status=400)
 
-
+    # Respond FAST for Stripe
     if event["type"] == "payment_intent.succeeded":
-        intent = event["data"]["object"]
-        order_id = intent["metadata"].get("order_id")
-
-        if not order_id:
-            return HttpResponse(status=200)
-
-        try:
-            with transaction.atomic():
-                order = Order.objects.select_for_update().get(
-                    id=int(order_id),
-                    status="PENDING",
-                )
-
-                cart_items = Cart.objects.filter(user=order.user)
-
-                for item in cart_items:
-                    OrderItem.objects.create(
-                        order=order,
-                        product=item.product,
-                        quantity=item.quantity,
-                        price_at_purchase=item.product.price,
-                    )
-
-                cart_items.delete()
-                send_order_confirmation_email(order)
-
-                order.status = "PAID"
-                order.save()
-
-                Payment.objects.update_or_create(
-                    order=order,
-                    defaults={
-                        "stripe_payment_intent": intent["id"],
-                        "amount": intent["amount"] / 100,
-                        "status": "SUCCEEDED",
-                    },
-                )
-
-        except Order.DoesNotExist:
-            return HttpResponse(status=404)
+        handle_payment_intent_succeeded(event)
 
     return HttpResponse(status=200)
+
+
+def handle_payment_intent_succeeded(event):
+    intent = event["data"]["object"]
+    order_id = intent["metadata"].get("order_id")
+
+    print("Stripe payment success for order:", order_id)
+
+    if not order_id:
+        return
+
+    try:
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(
+                id=int(order_id),
+                status="PENDING",
+            )
+
+            cart_items = Cart.objects.filter(user=order.user)
+
+            if not cart_items.exists():
+                return
+
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price_at_purchase=item.product.price,
+                )
+
+            # delete cart AFTER loop
+            cart_items.delete()
+
+            order.status = "PAID"
+            order.save(update_fields=["status"])
+
+            Payment.objects.update_or_create(
+                order=order,
+                defaults={
+                    "stripe_payment_intent": intent["id"],
+                    "amount": intent["amount"] / 100,
+                    "status": "SUCCEEDED",
+                },
+            )
+
+    except Order.DoesNotExist:
+        print("Order not found or already processed")
+        return
 
 
 class RefundOrderView(APIView):
