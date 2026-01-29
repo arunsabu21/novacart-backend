@@ -66,8 +66,10 @@ def create_payment_intent(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def stripe_webhook(request):
+    print("WEBHOOK HIT")
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+    print("Signature Present", bool(sig_header))
 
     try:
         event = stripe.Webhook.construct_event(
@@ -75,6 +77,7 @@ def stripe_webhook(request):
             sig_header,
             settings.STRIPE_WEBHOOK_SECRET,
         )
+        print("Webhook verified:", event["type"])
     except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
     except Exception:
@@ -84,6 +87,7 @@ def stripe_webhook(request):
     response = HttpResponse(status=200)
 
     if event["type"] == "payment_intent.succeeded":
+        print("PAYMENT SUCCEEDED AND EVENT RECEIVED")
         handle_payment_intent_succeeded(event)
 
     return response
@@ -102,8 +106,10 @@ def handle_payment_intent_succeeded(event):
                 id=int(order_id),
                 status="PENDING",
             )
+            print("Order Found:", order.id, order.status)
 
             cart_items = Cart.objects.filter(user=order.user)
+            print("CART COUNT:", cart_items.count())
 
             if not cart_items.exists():
                 return
@@ -117,6 +123,7 @@ def handle_payment_intent_succeeded(event):
                 )
 
             cart_items.delete()
+            print("CART DELETED SUCCESSFULLY")
 
             order.status = "PAID"
             order.save(update_fields=["status"])
@@ -129,6 +136,7 @@ def handle_payment_intent_succeeded(event):
                     "status": "SUCCEEDED",
                 },
             )
+            print("PAYMENT UPDATED")
 
     except Order.DoesNotExist:
         # already processed → ignore
