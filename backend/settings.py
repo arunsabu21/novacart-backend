@@ -25,11 +25,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://your-frontend-domain.com",
-    "https://novacart-backend-staging.onrender.com",
+    "https://novacart-frontend.vercel.app",
 ]
 
-# Only for Development
 CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
     "accept",
