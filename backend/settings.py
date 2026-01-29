@@ -13,7 +13,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "novacart-backend-staging.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 # ---------- CORS & CSRF ----------
 
@@ -25,7 +29,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Only for Development
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -43,8 +47,8 @@ CORS_ALLOW_HEADERS = [
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://novacart-backend-bnnb.onrender.com",
-    "https://your-frontend-domain.com",
+    "https://novacart-backend-staging.onrender.com",
+    "https://novacart-frontend.vercel.app",
 ]
 
 
