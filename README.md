@@ -40,7 +40,7 @@ https://novacart-backend-bnnb.onrender.com
 - PostgreSQL / Neon (Serverless production database)
 - SQLite (local testing)
 - Stripe (payments & webhooks)
-- Cloudinary (product images)
+- Cloudinary (Image hosting)
 - Render (deployment)
 - GitHub Actions (CI pipeline)
 
