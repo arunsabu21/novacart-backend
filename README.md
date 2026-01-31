@@ -37,7 +37,7 @@ https://novacart-backend-bnnb.onrender.com
 - Django REST Framework
 - Simple JWT for authentication
 - Resend (email service)
-- PostgreSQL (production database)
+- PostgreSQL / Neon (Serverless production database)
 - SQLite (local testing)
 - Stripe (payments & webhooks)
 - Cloudinary (product images)
