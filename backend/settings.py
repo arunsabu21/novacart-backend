@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "cloudinary",
     "cloudinary_storage",
     "addresses",
+    "categories",
 ]
 
 # Cloudinary Storage

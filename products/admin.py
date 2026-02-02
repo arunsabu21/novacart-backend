@@ -1,6 +1,12 @@
 from django.contrib import admin
-from .models import *
+from .models import Book, Wishlist
 
-# Register your models here.
-admin.site.register(Book)
-admin.site.register(Wishlist)
+@admin.register(Book)
+class BookAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "price", "stock", "category")
+    list_filter = ("category",)
+    search_fields = ("title",)
+    
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ("user", "book", "created_at")

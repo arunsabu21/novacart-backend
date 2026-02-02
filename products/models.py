@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from categories.models import Category
 
 # Create your models here.
 
@@ -11,6 +12,12 @@ class Book(models.Model):
     author = models.CharField(max_length=255)
     published_year = models.IntegerField(null=True, blank=True)
     stock = models.IntegerField(default=0)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="products"
+    )
     image = models.ImageField(upload_to="books/", null=True, blank=True)  # 🔥 added
     created_at = models.DateTimeField(auto_now_add=True)
 
