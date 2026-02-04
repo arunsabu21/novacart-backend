@@ -18,6 +18,14 @@ class BookListCreateView(generics.ListCreateAPIView):
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = Book.objects.all()
+        category = self.request.query_params.get("category")
+
+        if category:
+            queryset = queryset.filter(category_id=category)
+            return queryset
+
 
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all()
