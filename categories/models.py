@@ -19,6 +19,11 @@ class Category(models.Model):
         blank=True,
         null=True
     )
+    desktop_secondary_image = models.ImageField(
+        upload_to="categories/desktop_secondary",
+        blank=True,
+        null=True
+    )
     is_active = models.BooleanField(default=True)
     
     def __str__(self):
