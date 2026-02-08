@@ -24,7 +24,7 @@ A production-style REST API for an e-commerce application built with Django & Dj
 
 The public demo is available at:
 
-https://novacart-backend-bnnb.onrender.com
+https://novacart-backend-staging.onrender.com
 
 (Hosted on Render — first request may have a cold start.)
 
