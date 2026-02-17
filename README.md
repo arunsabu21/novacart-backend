@@ -44,7 +44,7 @@ A production-ready REST API for a modern e-commerce platform built with Django a
 NovaCart Backend is an API-first e-commerce platform that provides a complete suite of features for building modern online shopping experiences. The API follows RESTful principles and implements industry-standard patterns for authentication, payment processing, and order management.
 
 
-https://novacart-backend-staging.onrender.com
+[https://novacart-backend-staging.onrender.com](https://novacart-backend-staging.onrender.com)
 
 (Hosted on Render — first request may have a cold start.)
 =======
@@ -62,7 +62,7 @@ https://novacart-backend-staging.onrender.com
 
 ## Live Demo
 
-**API Base URL:** https://novacart-backend-bnnb.onrender.com
+**API Base URL:** [https://novacart-backend-bnnb.onrender.com](https://novacart-backend-staging.onrender.com)
 
 ⚠️ **Note:** Hosted on Render's free tier. First request may experience a cold start (30-60 seconds). Data may reset periodically.
 
