@@ -42,6 +42,7 @@ urlpatterns = [
     path("api/addresses/", include("addresses.urls")),
     path("api/orders/", include("orders.urls")),
     path("api/payments/", include("payments.urls")),
+    path("api/admin/", include("adminpanel.urls")),
     path('api/password-reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
 
 ]
