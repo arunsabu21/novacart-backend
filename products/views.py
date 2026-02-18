@@ -14,7 +14,6 @@ from .serializers import BookSerializer, WishlistSerializer
 
 
 class BookListCreateView(generics.ListCreateAPIView):
-    queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -23,8 +22,10 @@ class BookListCreateView(generics.ListCreateAPIView):
         category = self.request.query_params.get("category")
 
         if category:
-            queryset = queryset.filter(category_id=category)
-            return queryset
+            queryset = queryset.filter(category__slug=category)
+
+        return queryset
+
 
 
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
