@@ -6,6 +6,14 @@ class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
         fields = "__all__"
+        
+    def get_image(self, obj):
+        request = self.context.get("request")
+        if obj.image:
+            if request:
+                return request.build_absolute_url(obj.image.url)
+            return obj.image.url
+        return None
 
 
 class WishlistSerializer(serializers.ModelSerializer):

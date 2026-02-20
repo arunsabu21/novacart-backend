@@ -50,7 +50,7 @@ def add_to_cart(request):
 @permission_classes([IsAuthenticated])
 def get_cart(request):
     cart_items = Cart.objects.filter(user=request.user)
-    serializer = CartSerializer(cart_items, many=True)
+    serializer = CartSerializer(cart_items, many=True, context={"request": request})
     return Response(serializer.data)
 
 
