@@ -2,6 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.db.models import Count
+from django.db.models import Min, Max
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
@@ -22,12 +23,20 @@ class BookListCreateView(generics.ListCreateAPIView):
 
         category = self.request.query_params.get("category")
         brands = self.request.query_params.getlist("brand")
+        min_price = self.request.query_params.get("min_price")
+        max_price = self.request.query_params.get("max_price")
 
         if category:
             queryset = queryset.filter(category__slug=category)
 
         if brands:
             queryset = queryset.filter(title__in=brands)
+
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
 
         return queryset
 
@@ -47,14 +56,22 @@ class BrandListView(APIView):
         if category:
             queryset = queryset.filter(category__slug=category)
 
-        brands = (
-            queryset
-            .values("title")
-            .annotate(count=Count("id"))
-            .order_by("title")
-        )
+        brands = queryset.values("title").annotate(count=Count("id")).order_by("title")
 
         return Response(brands)
+
+
+class PriceRangeView(APIView):
+    def get(self, request):
+        category = request.query_params.get("category")
+        queryset = Book.objects.all()
+
+        if category:
+            queryset = queryset.filter(category__slug=category)
+
+            prices = queryset.aggregate(min_price=Min("price"), max_price=Max("price"))
+
+            return Response(prices)
 
 
 class WishlistView(APIView):
