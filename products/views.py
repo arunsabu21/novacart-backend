@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 # Create your views here.
-
+from django.db.models import Count
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
@@ -19,13 +19,17 @@ class BookListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Book.objects.all()
+
         category = self.request.query_params.get("category")
+        brands = self.request.query_params.getlist("brand")
 
         if category:
             queryset = queryset.filter(category__slug=category)
 
-        return queryset
+        if brands:
+            queryset = queryset.filter(title__in=brands)
 
+        return queryset
 
 
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -34,12 +38,33 @@ class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
+class BrandListView(APIView):
+    def get(self, request):
+        category = request.query_params.get("category")
+
+        queryset = Book.objects.all()
+
+        if category:
+            queryset = queryset.filter(category__slug=category)
+
+        brands = (
+            queryset
+            .values("title")
+            .annotate(count=Count("id"))
+            .order_by("title")
+        )
+
+        return Response(brands)
+
+
 class WishlistView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         wishlists = Wishlist.objects.filter(user=request.user)
-        serializer = WishlistSerializer(wishlists, many=True, context={"request": request})
+        serializer = WishlistSerializer(
+            wishlists, many=True, context={"request": request}
+        )
         return Response(serializer.data)
 
     def post(self, request):
