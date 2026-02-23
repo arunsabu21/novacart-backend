@@ -64,14 +64,19 @@ class BrandListView(APIView):
 class PriceRangeView(APIView):
     def get(self, request):
         category = request.query_params.get("category")
+
         queryset = Book.objects.all()
 
         if category:
             queryset = queryset.filter(category__slug=category)
 
-            prices = queryset.aggregate(min_price=Min("price"), max_price=Max("price"))
+        min_price = queryset.aggregate(Min("price"))["price__min"]
+        max_price = queryset.aggregate(Max("price"))["price__max"]
 
-            return Response(prices)
+        return Response({
+            "min_price": min_price or 0,
+            "max_price": max_price or 0
+        })
 
 
 class WishlistView(APIView):
