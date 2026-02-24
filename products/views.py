@@ -25,6 +25,7 @@ class BookListCreateView(generics.ListCreateAPIView):
         brands = self.request.query_params.getlist("brand")
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
+        sort = self.request.query_params.get("sort")
 
         if category:
             queryset = queryset.filter(category__slug=category)
@@ -37,6 +38,12 @@ class BookListCreateView(generics.ListCreateAPIView):
 
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
+
+        if sort == "price":
+            queryset = queryset.order_by("price")
+
+        elif sort == "-price":
+            queryset = queryset.order_by("-price")
 
         return queryset
 
@@ -73,10 +80,7 @@ class PriceRangeView(APIView):
         min_price = queryset.aggregate(Min("price"))["price__min"]
         max_price = queryset.aggregate(Max("price"))["price__max"]
 
-        return Response({
-            "min_price": min_price or 0,
-            "max_price": max_price or 0
-        })
+        return Response({"min_price": min_price or 0, "max_price": max_price or 0})
 
 
 class WishlistView(APIView):
