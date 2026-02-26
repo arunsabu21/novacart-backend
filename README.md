@@ -49,13 +49,13 @@ NovaCart Backend is an API-first e-commerce platform that provides a complete su
 (Hosted on Render — first request may have a cold start.)
 =======
 **Key Highlights:**
-- 🔐 JWT-based authentication with access/refresh tokens
-- 💳 Stripe payment integration with webhook support
-- 🛒 Real-time cart management
-- 📦 Complete order lifecycle management
-- ☁️ Cloud-ready with Cloudinary media storage
-- 📧 Email notifications via Resend
-- 🚀 Production-deployed on Render
+- JWT-based authentication with access/refresh tokens
+- Stripe payment integration with webhook support
+- Real-time cart management
+- Complete order lifecycle management
+- Cloud-ready with Cloudinary media storage
+- Email notifications via Resend
+- Production-deployed on Render
 
 
 ---
@@ -109,7 +109,7 @@ curl https://novacart-backend-bnnb.onrender.com/api/health/
 
 ## Features
 
-### ✅ Implemented
+### Implemented
 
 - **Authentication**
   - User registration and login
@@ -809,4 +809,4 @@ pip install django-ratelimit
 
 **Problem:** First request takes 30-60 seconds
 
-**Solution:** This is normal for Render's free tier. The servi
+**Solution:** This is normal for Render's free tier.
