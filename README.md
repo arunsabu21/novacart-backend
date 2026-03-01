@@ -810,3 +810,8 @@ pip install django-ratelimit
 **Problem:** First request takes 30-60 seconds
 
 **Solution:** This is normal for Render's free tier.
+
+## Author
+Arun Sabu (Software Engineer) </br>
+GitHub: [@arunsabu21](https://github.com/arunsabu21) </br>
+Linkedin: [@arunsabu21](https://linkedin.com/in/arunsabu21)
