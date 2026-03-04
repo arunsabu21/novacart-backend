@@ -9,7 +9,8 @@
 
 A production-ready REST API for a modern e-commerce platform built with Django and Django REST Framework. Features include authentication, product management, shopping cart, order processing, and Stripe payment integration.
 
-[Live Demo](https://novacart-backend-bnnb.onrender.com) • [Report Bug](https://github.com/arunsabu21/novacart-backend/issues) • [Request Feature](https://github.com/arunsabu21/novacart-backend/issues)
+[Live Demo](https://novacart-backend-staging.onrender.com)
+ • [Report Bug](https://github.com/arunsabu21/novacart-backend/issues) • [Request Feature](https://github.com/arunsabu21/novacart-backend/issues)
 
 </div>
 
@@ -62,7 +63,7 @@ NovaCart Backend is an API-first e-commerce platform that provides a complete su
 
 ## Live Demo
 
-**API Base URL:** [https://novacart-backend-bnnb.onrender.com](https://novacart-backend-staging.onrender.com)
+**API Base URL:** [https://novacart-backend-staging.onrender.com](https://novacart-backend-staging.onrender.com)
 
 ⚠️ **Note:** Hosted on Render's free tier. First request may experience a cold start (30-60 seconds). Data may reset periodically.
 
