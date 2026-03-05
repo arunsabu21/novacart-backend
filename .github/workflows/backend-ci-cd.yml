@@ -1,4 +1,4 @@
-name: Backend CI (Django)
+name: Backend CI/CD (Django)
 
 on:
   push:
@@ -37,3 +37,11 @@ jobs:
 
       - name: Run tests
         run: python manage.py test
+
+  deploy:
+    needs: django-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deployment
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
