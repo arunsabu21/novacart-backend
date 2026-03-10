@@ -31,6 +31,8 @@ A production-ready REST API for a modern e-commerce platform built with Django a
 - [Order Lifecycle](#order-lifecycle)
 - [Testing](#testing)
 - [Deployment](#deployment)
+- [CI/CD Pipelines](#cicd)
+- [Monitoring](#monitoring)
 - [Security](#security)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
@@ -48,7 +50,7 @@ NovaCart Backend is an API-first e-commerce platform that provides a complete su
 [https://novacart-backend-staging.onrender.com](https://novacart-backend-staging.onrender.com)
 
 (Hosted on Render — first request may have a cold start.)
-=======
+
 **Key Highlights:**
 - JWT-based authentication with access/refresh tokens
 - Stripe payment integration with webhook support
@@ -65,15 +67,15 @@ NovaCart Backend is an API-first e-commerce platform that provides a complete su
 
 **API Base URL:** [https://novacart-backend-staging.onrender.com](https://novacart-backend-staging.onrender.com)
 
-⚠️ **Note:** Hosted on Render's free tier. First request may experience a cold start (30-60 seconds). Data may reset periodically.
+⚠️ **Note:** Hosted on Render's free tier. Initial request may take a few seconds due to server cold start.
 
 **Test the API:**
 ```bash
 # Get all products
-curl https://novacart-backend-bnnb.onrender.com/api/products/
+curl https://novacart-backend-staging.onrender.com/api/products/
 
 # Health check
-curl https://novacart-backend-bnnb.onrender.com/api/health/
+curl https://novacart-backend-staging.onrender.com/api/health/
 ```
 
 ---
@@ -428,7 +430,7 @@ NovaCart follows a **Modular Monolith** architecture with an **API-first** appro
 ### Base URL
 
 ```
-Production: https://novacart-backend-bnnb.onrender.com
+Production: https://novacart-backend-staging.onrender.com
 Local: http://127.0.0.1:8000
 ```
 
@@ -451,7 +453,7 @@ Authorization: Bearer <your_access_token>
 **Example: Obtain Token**
 
 ```bash
-curl -X POST https://novacart-backend-bnnb.onrender.com/api/token/ \
+curl -X POST https://novacart-backend-staging.onrender.com/api/token/ \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -487,7 +489,7 @@ curl -X POST https://novacart-backend-bnnb.onrender.com/api/token/ \
 **Example: List Products**
 
 ```bash
-curl https://novacart-backend-bnnb.onrender.com/api/products/
+curl https://novacart-backend-bnnb.staging.com/api/products/
 ```
 
 ---
@@ -503,7 +505,7 @@ curl https://novacart-backend-bnnb.onrender.com/api/products/
 **Example: Add to Wishlist**
 
 ```bash
-curl -X POST https://novacart-backend-bnnb.onrender.com/api/products/wishlist/ \
+curl -X POST https://novacart-backend-staging.onrender.com/api/products/wishlist/ \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"product_id": 1}'
@@ -547,7 +549,7 @@ curl -X POST https://novacart-backend-bnnb.onrender.com/api/cart/add/ \
 **Example: Create Order**
 
 ```bash
-curl -X POST https://novacart-backend-bnnb.onrender.com/api/orders/create/ \
+curl -X POST https://novacart-backend-staging.onrender.com/api/orders/create/ \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -568,7 +570,7 @@ curl -X POST https://novacart-backend-bnnb.onrender.com/api/orders/create/ \
 **Example: Create Payment Intent**
 
 ```bash
-curl -X POST https://novacart-backend-bnnb.onrender.com/api/payments/payment-intent/ \
+curl -X POST https://novacart-backend-staging.onrender.com/api/payments/payment-intent/ \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -759,6 +761,28 @@ gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --workers 3
 
 ---
 
+## CI/CD Pipelines
+
+Continuous Integration and Deployment are configured using **GitHub Actions**.
+
+Every push to the repository triggers an automated pipeline that ensure code quality and safe deployment.
+
+### Pipeline Steps
+
+1. Install Python dependencies
+2. Run Django system checks
+3. Apply database migrations
+4. Execute automated tests
+5. Deploy application to Render using deploy hooks
+
+## Monitoring
+
+The backend exposes a health check endpoint:
+
+/api/health/
+
+This endpoint is monitored using UptimeRobot to ensure the API remains responsive and to prevent cold-start delays on Render's free tier hosting.
+
 ## Security
 
 ### Authentication & Authorization
@@ -813,6 +837,6 @@ pip install django-ratelimit
 **Solution:** This is normal for Render's free tier.
 
 ## Author
-Arun Sabu (Software Engineer) </br>
+**Arun Sabu** (Software Engineer) </br>
 GitHub: [@arunsabu21](https://github.com/arunsabu21) </br>
 Linkedin: [@arunsabu21](https://linkedin.com/in/arunsabu21)
