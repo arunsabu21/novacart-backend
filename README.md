@@ -59,6 +59,7 @@ NovaCart Backend is an API-first e-commerce platform that provides a complete su
 - Cloud-ready with Cloudinary media storage
 - Email notifications via Resend
 - Production-deployed on Render
+- Custom Admin Dashboard 
 
 
 ---
