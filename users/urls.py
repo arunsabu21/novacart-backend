@@ -3,7 +3,7 @@ from .views import RegisterView, UserProfileView, UpdateProfileView, password_re
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
-    path('profile/', UserProfileView.as_view(), name='profile'),
+    path('my/dashboard/', UserProfileView.as_view(), name='profile'),
     path('profile/update/', UpdateProfileView.as_view(), name='profile-update'),
     path("password-reset/confirm/", password_reset_confirm),
 ]
