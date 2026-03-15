@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -42,9 +43,7 @@ class CreateOrderView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        total_amount = sum(
-            item.quantity * item.product.price for item in cart_items
-        )
+        total_amount = sum(item.quantity * item.product.price for item in cart_items)
 
         with transaction.atomic():
             order = Order.objects.create(
@@ -69,12 +68,24 @@ class CreateOrderView(APIView):
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class MyOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        search = request.GET.get("search", "").strip()
+
         orders = Order.objects.filter(user=request.user).order_by("-created_at")
+
+        if search:
+            orders = orders.filter(
+                Q(items__product__title__icontains=search)
+                | Q(items__product__subtitle__icontains=search)
+                | Q(items__product__description__icontains=search)
+            ).distinct()
+
         serializer = OrderSerializer(orders, many=True, context={"request": request})
+
         return Response(serializer.data)
 
 
