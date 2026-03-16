@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from django.db.models import Q
+from .pagination import OrderPagination
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -83,10 +84,13 @@ class MyOrdersView(APIView):
                 | Q(items__product__subtitle__icontains=search)
                 | Q(items__product__description__icontains=search)
             ).distinct()
+            
+        paginator = OrderPagination()
+        paginated_orders = paginator.paginate_queryset(orders, request)
 
-        serializer = OrderSerializer(orders, many=True, context={"request": request})
+        serializer = OrderSerializer(paginated_orders, many=True, context={"request": request})
 
-        return Response(serializer.data)
+        return paginator.get_paginated_response(serializer.data)
 
 
 @api_view(["POST"])
