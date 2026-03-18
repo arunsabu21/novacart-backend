@@ -8,6 +8,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_title = serializers.CharField(source="product.title", read_only=True)
     product_subtitle = serializers.CharField(source="product.subtitle", read_only=True)
     product_image = serializers.SerializerMethodField()
+    payment_method = serializers.CharField(source="order.payment_method", read_only=True)
 
     class Meta:
         model = OrderItem
@@ -17,7 +18,9 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "product_subtitle",
             "product_image",
             "quantity",
+            "status",
             "price_at_purchase",
+            "payment_method",
         ]
         
     def get_product_image(self, obj):

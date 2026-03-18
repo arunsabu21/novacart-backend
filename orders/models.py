@@ -31,10 +31,17 @@ class Order(models.Model):
         return f"Order #{self.id} - {self.user.username}"
     
 class OrderItem(models.Model):
+    ITEM_STATUS_CHOICES = (
+        ("ACTIVE", "Active"),
+        ("CANCELLED", "Cancelled"),
+        ("REFUND_REQUESTED", "Refund Requested"),
+        ("REFUNDED", "Refunded"),
+    )
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Book, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default="ACTIVE")
     
     def __str__(self):
         return f"{self.product.title} - {self.quantity}"

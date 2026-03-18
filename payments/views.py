@@ -11,10 +11,9 @@ from rest_framework.views import APIView
 from cart.models import Cart
 from orders.models import Order, OrderItem
 from payments.models import Payment
+import logging
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
-
-
+logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -31,17 +30,16 @@ def create_payment_intent(request):
     if not cart_items.exists():
         return Response({"error": "Cart empty"}, status=400)
 
-    total_amount = sum(
-        item.quantity * item.product.price for item in cart_items
-    )
+    total_amount = sum(item.quantity * item.product.price for item in cart_items)
 
-    order = Order.objects.create(
-        user=user,
-        address_id=address_id,
-        payment_method="ONLINE",
-        status="PENDING",
-        total_amount=total_amount,
-    )
+    with transaction.atomic():
+        order = Order.objects.create(
+            user=user,
+            address_id=address_id,
+            payment_method="ONLINE",
+            status="PENDING",
+            total_amount=total_amount,
+        )
 
     intent = stripe.PaymentIntent.create(
         amount=int(total_amount * 100),  # paise
@@ -49,18 +47,23 @@ def create_payment_intent(request):
         automatic_payment_methods={"enabled": True},
         metadata={"order_id": str(order.id)},
     )
-
-    Payment.objects.create(
+    payment, created = Payment.objects.update_or_create(
         order=order,
-        stripe_payment_intent=intent.id,
-        amount=total_amount,
-        status="CREATED",
+        defaults={
+            "stripe_payment_intent": intent.id,
+            "amount": total_amount,
+            "status": "CREATED",
+        },
     )
 
-    return Response({
-        "client_secret": intent.client_secret,
-        "amount": total_amount,
-    })
+    logger.info(f"Saved UPI: {payment.stripe_payment_intent}")
+
+    return Response(
+        {
+            "client_secret": intent.client_secret,
+            "amount": total_amount,
+        }
+    )
 
 
 @api_view(["POST"])
@@ -68,7 +71,7 @@ def create_payment_intent(request):
 def stripe_webhook(request):
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
-    print("Signature Present", bool(sig_header))
+    logger.info(f"Signature Present: {bool(sig_header)}")
 
     try:
         event = stripe.Webhook.construct_event(
@@ -76,18 +79,48 @@ def stripe_webhook(request):
             sig_header,
             settings.STRIPE_WEBHOOK_SECRET,
         )
-
     except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
     except Exception:
         return HttpResponse(status=400)
 
-    # ✅ ACK STRIPE IMMEDIATELY
+    # ACK immediately
     response = HttpResponse(status=200)
 
     if event["type"] == "payment_intent.succeeded":
-        print("PAYMENT SUCCEEDED AND EVENT RECEIVED")
+        logger.info("PAYMENT SUCCEEDED AND EVENT RECEIVED")
         handle_payment_intent_succeeded(event)
+
+    elif event["type"] == "charge.refunded":
+        logger.info("REFUND SUCCESS EVENT RECEIVED")
+
+        charge = event["data"]["object"]
+        payment_intent = charge.get("payment_intent")
+
+        if not payment_intent:
+            logger.warning("No payment_intent found")
+            return response
+
+        payment = Payment.objects.filter(stripe_payment_intent=payment_intent).first()
+
+        if payment and payment.status != "REFUNDED":
+            payment.status = "REFUNDED"
+            payment.save(update_fields=["status"])
+
+            order = payment.order
+
+            for item in order.items.all():
+                if item.status in ["REFUND_REQUESTED", "CANCELLED"]:
+                    item.status = "REFUNDED"
+                    item.save(update_fields=["status"])
+
+            remaining = order.items.exclude(status="REFUNDED")
+
+            if not remaining.exists():
+                order.status = "REFUNDED"
+                order.save(update_fields=["status"])
+
+            logger.info(f"Order {order.id} marked as REFUNDED")
 
     return response
 
@@ -105,10 +138,10 @@ def handle_payment_intent_succeeded(event):
                 id=int(order_id),
                 status="PENDING",
             )
-            print("Order Found:", order.id, order.status)
+            logger.info("Order Found:", order.id, order.status)
 
             cart_items = Cart.objects.filter(user=order.user)
-            print("CART COUNT:", cart_items.count())
+            logger.info("CART COUNT:", cart_items.count())
 
             if not cart_items.exists():
                 return
@@ -119,12 +152,12 @@ def handle_payment_intent_succeeded(event):
                     product=item.product,
                     quantity=item.quantity,
                     price_at_purchase=item.product.price,
+                    status="CONFIRMED",
                 )
 
             cart_items.delete()
-            
 
-            order.status = "PAID"
+            order.status = "CONFIRMED"
             order.save(update_fields=["status"])
 
             Payment.objects.update_or_create(
@@ -135,7 +168,6 @@ def handle_payment_intent_succeeded(event):
                     "status": "SUCCEEDED",
                 },
             )
-            
 
     except Order.DoesNotExist:
         # already processed → ignore
@@ -151,7 +183,7 @@ class RefundOrderView(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=404)
 
-        if order.status != "PAID":
+        if order.status != "CONFIRMED":
             return Response({"error": "Only paid orders can be refunded"}, status=400)
 
         try:
