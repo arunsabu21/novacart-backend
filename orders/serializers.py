@@ -21,6 +21,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "status",
             "price_at_purchase",
             "payment_method",
+            "cancelled_at",
         ]
         
     def get_product_image(self, obj):

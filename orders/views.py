@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 import stripe
 from django.conf import settings
+from django.utils import timezone
 from django.db.models import Q
 from .pagination import OrderPagination
 from rest_framework import status
@@ -144,10 +145,27 @@ def cancel_item_details(request):
                 {
                     "id": item.id,
                     "product_title": item.product.title,
+                    "email": item.order.user.email,
                     "product_subtitle": item.product.subtitle,
                     "product_image": request.build_absolute_uri(item.product.image.url),
                     "price_at_purchase": item.price_at_purchase,
-                    "payment_method": item.order.payment_method,
+                    "payment_method": item.order.get_payment_method_display(),
+                    "status": item.status,
+                    "estimated_delivery": get_estimated_delivery(
+                        item.order.created_at.date()
+                    ),
+                    "cancelled_at": item.cancelled_at,
+                    "created_at": item.order.created_at,
+                    "address": {
+                        "name": item.order.address.name,
+                        "mobile": item.order.address.mobile,
+                        "pincode": item.order.address.pincode,
+                        "state": item.order.address.state,
+                        "district": item.order.address.district,
+                        "town": item.order.address.town,
+                        "house_number": item.order.address.house_number,
+                        "address": item.order.address.address,
+                    },
                 }
             )
 
@@ -159,64 +177,73 @@ def cancel_item_details(request):
         item_id = request.data.get("itemId")
         reason = request.data.get("reason")
 
-        try:
-            item = OrderItem.objects.get(
-                id=item_id, order_id=order_id, order__user=request.user
-            )
-            # prevent double cancel
-            if item.status in ["CANCELLED", "REFUND_REQUESTED"]:
-                return Response({"error": "Item already cancelled"}, status=400)
+    try:
+        item = OrderItem.objects.get(
+            id=item_id, order_id=order_id, order__user=request.user
+        )
 
+        if item.status in ["CANCELLED", "REFUND_REQUESTED"]:
+            return Response({"error": "Item already cancelled"}, status=400)
+
+        if item.order.payment_method == "ONLINE":
+            item.status = "REFUND_REQUESTED"
+        else:
+            item.status = "CANCELLED"
+        item.cancelled_at = timezone.now()
+        item.save()
+
+        remaining_items = OrderItem.objects.filter(order=item.order).exclude(
+            status__in=["CANCELLED", "REFUND_REQUESTED"]
+        )
+
+        if not remaining_items.exists():
             if item.order.payment_method == "ONLINE":
-                item.status = "REFUND_REQUESTED"
+                item.order.status = "REFUND_REQUESTED"
             else:
-                item.status = "CANCELLED"
-            item.save()
-            remaining_items = OrderItem.objects.filter(order=item.order).exclude(
-                status__in=["CANCELLED", "REFUND_REQUESTED"]
-            )
+                item.order.status = "CANCELLED"
+            item.order.save(update_fields=["status"])
 
-            if not remaining_items.exists():
-                if item.order.payment_method == "ONLINE":
-                    item.order.status = "REFUND_REQUESTED"
-                else:
-                    item.order.status = "CANCELLED"
-                item.order.save(update_fields=["status"])
+        logger.info(
+            f"Cancel Request > order:{order_id}, item:{item_id}, user:{request.user}"
+        )
 
-            logger.info(
-                f"Cancel Request > order:{order_id}, item:{item_id}, user:{request.user}"
-            )
+        payment = None
 
-            payment = None
+        if item.order.payment_method == "ONLINE":
+            payment = Payment.objects.filter(order=item.order).first()
 
-            if item.order.payment_method == "ONLINE":
-                payment = Payment.objects.filter(order=item.order).first()
+        # HANDLE ALL CASES PROPERLY
+        if not payment:
+            logger.warning(f"No payment found for order {item.order.id}")
+            return Response({"message": "Item cancelled"})
 
-            if not payment:
-                logger.warning(f"No payment found for order {item.order.id}")
+        if payment.status == "REFUNDED":
+            logger.warning(f"Already refunded for order {item.order.id}")
+            return Response({"message": "Already refunded"})
 
-            elif payment.status == "REFUNDED":
-                logger.warning(f"Already refunded for order {item.order.id}")
+        if payment.stripe_payment_intent:
+            refund_amount = item.price_at_purchase * item.quantity
 
-            elif payment.stripe_payment_intent:
-                refund_amount = item.price_at_purchase * item.quantity
+            payment.status = "REFUND_REQUESTED"
+            payment.save(update_fields=["status"])
 
-                payment.status = "REFUND_REQUESTED"
-                payment.save(update_fields=["status"])
+            try:
+                stripe.Refund.create(
+                    payment_intent=payment.stripe_payment_intent,
+                    amount=int(refund_amount * 100),
+                )
+            except Exception as e:
+                logger.error(f"Stripe refund failed: {str(e)}")
+                return Response({"error": "Refund failed"}, status=500)
 
-                try:
-                    stripe.Refund.create(
-                        payment_intent=payment.stripe_payment_intent,
-                        amount=int(refund_amount * 100),
-                    )
-                except Exception as e:
-                    logger.error(f"Stripe refund failed: {str(e)}")
-                    return Response({"error": "Refund failed"}, status=500)
-                logger.info(f"Refund triggered > amount {refund_amount}")
-                return Response({"message": "Item cancelled successfully"})
+            logger.info(f"Refund triggered > amount {refund_amount}")
+            return Response({"message": "Item cancelled successfully"})
 
-        except OrderItem.DoesNotExist:
-            return Response({"error": "Item not found"}, status=400)
+        # FINAL FALLBACK
+        return Response({"message": "Item cancelled"})
+
+    except OrderItem.DoesNotExist:
+        return Response({"error": "Item not found"}, status=400)
 
 
 @api_view(["GET"])
