@@ -149,6 +149,7 @@ def cancel_item_details(request):
                     "product_subtitle": item.product.subtitle,
                     "product_image": request.build_absolute_uri(item.product.image.url),
                     "price_at_purchase": item.price_at_purchase,
+                    "payment_method": item.order.payment_method,
                     "payment_method": item.order.get_payment_method_display(),
                     "status": item.status,
                     "estimated_delivery": get_estimated_delivery(
