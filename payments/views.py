@@ -112,15 +112,17 @@ def stripe_webhook(request):
         payment_intent = data.get("payment_intent")
 
         if not payment_intent:
-            charge_id = data.get("charge")
+            charge_obj = data.get("charge")
 
-            if charge_id:
+            if isinstance(charge_obj, dict):
+                payment_intent = charge_obj.get("payment_intent")
+            elif isinstance(charge_obj, str):
                 try:
-                    charge = stripe.Charge.retrieve(charge_id)
+                    charge = stripe.Charge.retrieve(charge_obj)
                     payment_intent = charge.payment_intent
                 except Exception as e:
                     logger.error(f"CHARGE FETCH FAILED: {str(e)}")
-                    return response
+                    logger.error("Continuing without payment_intent")
         if not payment_intent:
             logger.warning("STILL NO PAYMENT INTENT")
             return response
