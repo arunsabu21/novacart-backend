@@ -105,7 +105,7 @@ def stripe_webhook(request):
     # ===============================
     # ✅ REFUND EVENTS (FIXED)
     # ===============================
-    if event_type in ["charge.refunded", "refund.created", "refund.updated"]:
+    if "refund" in event_type:
         logger.info("REFUND EVENT RECEIVED")
 
         data = event["data"]["object"]
