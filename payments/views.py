@@ -71,8 +71,10 @@ def create_payment_intent(request):
 def stripe_webhook(request):
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
-    logger.info(f"Signature Present: {bool(sig_header)}")
 
+    logger.info(f"Webhook hit. Signature present: {bool(sig_header)}")
+
+    # ✅ Verify signature
     try:
         event = stripe.Webhook.construct_event(
             payload,
@@ -80,48 +82,80 @@ def stripe_webhook(request):
             settings.STRIPE_WEBHOOK_SECRET,
         )
     except stripe.error.SignatureVerificationError:
+        logger.error("❌ Invalid signature")
         return HttpResponse(status=400)
-    except Exception:
+    except Exception as e:
+        logger.error(f"❌ Webhook error: {str(e)}")
         return HttpResponse(status=400)
 
-    # ACK immediately
+    event_type = event["type"]
+    logger.info(f"🔥 EVENT RECEIVED: {event_type}")
+
+    # Always ACK early
     response = HttpResponse(status=200)
 
-    if event["type"] == "payment_intent.succeeded":
-        logger.info("PAYMENT SUCCEEDED AND EVENT RECEIVED")
+    # ===============================
+    # ✅ PAYMENT SUCCESS
+    # ===============================
+    if event_type == "payment_intent.succeeded":
+        logger.info("✅ PAYMENT SUCCESS HANDLER TRIGGERED")
         handle_payment_intent_succeeded(event)
+        return response
 
-    elif event["type"] == "charge.refunded":
-        logger.info("REFUND SUCCESS EVENT RECEIVED")
+    # ===============================
+    # ✅ REFUND EVENTS (FIXED)
+    # ===============================
+    if event_type in ["charge.refunded", "refund.created", "refund.updated"]:
+        logger.info("💸 REFUND EVENT RECEIVED")
 
-        charge = event["data"]["object"]
-        payment_intent = charge.get("payment_intent")
+        data = event["data"]["object"]
+
+        # 🔥 Extract payment_intent safely
+        payment_intent = data.get("payment_intent") or data.get(  # charge.refunded
+            "payment_intent"
+        )  # fallback
 
         if not payment_intent:
-            logger.warning("No payment_intent found")
+            logger.warning("⚠️ No payment_intent found in event")
             return response
 
         payment = Payment.objects.filter(stripe_payment_intent=payment_intent).first()
 
-        if payment and payment.status != "REFUNDED":
-            payment.status = "REFUNDED"
-            payment.save(update_fields=["status"])
+        if not payment:
+            logger.warning(f"⚠️ Payment not found for intent {payment_intent}")
+            return response
 
-            order = payment.order
+        if payment.status == "REFUNDED":
+            logger.info("⚠️ Already refunded, skipping")
+            return response
 
-            for item in order.items.all():
-                if item.status in ["REFUND_REQUESTED", "CANCELLED"]:
-                    item.status = "REFUNDED"
-                    item.save(update_fields=["status"])
+        # ✅ Update payment
+        payment.status = "REFUNDED"
+        payment.save(update_fields=["status"])
 
-            remaining = order.items.exclude(status="REFUNDED")
+        order = payment.order
 
-            if not remaining.exists():
-                order.status = "REFUNDED"
-                order.save(update_fields=["status"])
+        # ✅ Update all items
+        for item in order.items.all():
+            if item.status in ["REFUND_REQUESTED", "CANCELLED"]:
+                item.status = "REFUNDED"
+                item.save(update_fields=["status"])
 
-            logger.info(f"Order {order.id} marked as REFUNDED")
+        # ✅ Update order
+        remaining = order.items.exclude(status="REFUNDED")
 
+        if not remaining.exists():
+            order.status = "REFUNDED"
+            order.save(update_fields=["status"])
+
+        logger.info(f"✅ Order {order.id} marked as REFUNDED")
+
+        return response
+
+    # ===============================
+    # 🔁 IGNORE OTHER EVENTS
+    # ===============================
+    logger.info(f"ℹ️ Ignored event: {event_type}")
     return response
 
 
