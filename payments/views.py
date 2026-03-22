@@ -171,10 +171,10 @@ def handle_payment_intent_succeeded(event):
                 id=int(order_id),
                 status="PENDING",
             )
-            logger.info("Order Found:", order.id, order.status)
+            logger.info(f"Order Found: {order_id}, {order.status}")
 
             cart_items = Cart.objects.filter(user=order.user)
-            logger.info("CART COUNT:", cart_items.count())
+            logger.info(f"CART COUNT: {cart_items.count()}")
 
             if not cart_items.exists():
                 return
