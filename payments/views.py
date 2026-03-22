@@ -106,50 +106,47 @@ def stripe_webhook(request):
     # ✅ REFUND EVENTS (FIXED)
     # ===============================
     if event_type in ["charge.refunded", "refund.created", "refund.updated"]:
-        logger.info("💸 REFUND EVENT RECEIVED")
+        logger.info("REFUND EVENT RECEIVED")
 
         data = event["data"]["object"]
-
-        # 🔥 Extract payment_intent safely
-        payment_intent = data.get("payment_intent") or data.get(  # charge.refunded
-            "payment_intent"
-        )  # fallback
+        payment_intent = data.get("payment_intent")
 
         if not payment_intent:
-            logger.warning("⚠️ No payment_intent found in event")
+            charge_id = data.get("charge")
+
+            if charge_id:
+                try:
+                    charge = stripe.Charge.retrieve(charge_id)
+                    payment_intent = charge.payment_intent
+                except Exception as e:
+                    logger.error(f"CHARGE FETCH FAILED: {str(e)}")
+                    return response
+        if not payment_intent:
+            logger.warning("STILL NO PAYMENT INTENT")
             return response
 
         payment = Payment.objects.filter(stripe_payment_intent=payment_intent).first()
 
         if not payment:
-            logger.warning(f"⚠️ Payment not found for intent {payment_intent}")
+            logger.warning(f"PAYMENT NOT FOUND: {payment_intent}")
             return response
-
         if payment.status == "REFUNDED":
-            logger.info("⚠️ Already refunded, skipping")
+            logger.info("ALREADY REFUNDED")
             return response
 
-        # ✅ Update payment
         payment.status = "REFUNDED"
         payment.save(update_fields=["status"])
 
         order = payment.order
 
-        # ✅ Update all items
         for item in order.items.all():
             if item.status in ["REFUND_REQUESTED", "CANCELLED"]:
                 item.status = "REFUNDED"
                 item.save(update_fields=["status"])
 
-        # ✅ Update order
-        remaining = order.items.exclude(status="REFUNDED")
-
-        if not remaining.exists():
-            order.status = "REFUNDED"
-            order.save(update_fields=["status"])
-
-        logger.info(f"✅ Order {order.id} marked as REFUNDED")
-
+        order.status = "REFUNDED"
+        order.save(update_fields=["status"])
+        logger.info(f"Order {order.id} marked REFUNDED")
         return response
 
     # ===============================
