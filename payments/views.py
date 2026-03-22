@@ -94,17 +94,11 @@ def stripe_webhook(request):
     # Always ACK early
     response = HttpResponse(status=200)
 
-    # ===============================
-    # ✅ PAYMENT SUCCESS
-    # ===============================
     if event_type == "payment_intent.succeeded":
         logger.info("✅ PAYMENT SUCCESS HANDLER TRIGGERED")
         handle_payment_intent_succeeded(event)
         return response
-
-    # ===============================
-    # ✅ REFUND EVENTS (FIXED)
-    # ===============================
+     
     if "refund" in event_type:
         logger.info("REFUND EVENT RECEIVED")
 
@@ -127,11 +121,15 @@ def stripe_webhook(request):
             logger.warning("STILL NO PAYMENT INTENT")
             return response
 
-        payment = Payment.objects.filter(stripe_payment_intent=payment_intent).first()
-
-        if not payment:
-            logger.warning(f"PAYMENT NOT FOUND: {payment_intent}")
+        try:
+            payment = Payment.objects.select_related("order").get(
+                stripe_payment_intent = payment_intent
+            )
+            
+        except Payment.DoesNotExist:
+            logger.warning(f"PAYMENT NOT FOUND {payment_intent}")
             return response
+
         if payment.status == "REFUNDED":
             logger.info("ALREADY REFUNDED")
             return response
@@ -151,9 +149,6 @@ def stripe_webhook(request):
         logger.info(f"Order {order.id} marked REFUNDED")
         return response
 
-    # ===============================
-    # 🔁 IGNORE OTHER EVENTS
-    # ===============================
     logger.info(f"ℹ️ Ignored event: {event_type}")
     return response
 
