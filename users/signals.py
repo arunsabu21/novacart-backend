@@ -21,7 +21,7 @@ def password_reset_token_created(sender, instance, reset_password_token, **kwarg
                 "html": f"""
                     <h2>Password Reset</h2>
                     <p>Click the link below to reset your password:</p>
-                    <a href="{reset_url}">{reset_url}</a>
+                    <p>{reset_url}</p>
                 """,
             }
         )
