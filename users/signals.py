@@ -10,8 +10,7 @@ resend.api_key = settings.RESEND_API_KEY
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, **kwargs):
 
-    # correct frontend link
-    reset_url = f"https://novacart-frontend.netlify.app/reset-password/{reset_password_token.user.pk}/{reset_password_token.key}"
+    reset_url = f"https://novacart-frontend.vercel.app/reset-password/{reset_password_token.user.pk}/{reset_password_token.key}"
 
     try:
         resend.Emails.send(
