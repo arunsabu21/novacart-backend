@@ -7,7 +7,7 @@ from .serializers import RegisterSerializer, ProfileSerializer
 from rest_framework import status
 from rest_framework.views import APIView
 from django_rest_passwordreset.models import ResetPasswordToken
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 import traceback
 from rest_framework.exceptions import ValidationError
 
@@ -78,5 +78,13 @@ def password_reset_confirm(request):
 
     return Response({"detail": "Password Reset Successful"}, status=200)
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user(request):
+    return Response({
+        "username": request.user.username,
+        "email": request.user.email,
+    })
 
 
