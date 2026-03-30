@@ -9,8 +9,6 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from .models import Book, Wishlist
 from .serializers import BookSerializer, WishlistSerializer
 from django.db.models import Q, F, Case, When, Value
-from django.db.models.functions import Substr, StrIndex
-from collections import defaultdict
 
 
 class BookListCreateView(generics.ListCreateAPIView):
@@ -106,64 +104,3 @@ class WishlistView(APIView):
     def delete(self, request, pk):
         Wishlist.objects.filter(user=request.user, pk=pk).delete()
         return Response({"message": "Removed from wishlist"})
-
-
-@api_view(["GET"])
-def auto_suggest(request):
-    query = request.GET.get("q", "").strip()
-
-    if not query:
-        return Response([])
-
-    categories = (
-        Book.objects
-        .filter(category__name__icontains=query)
-        .values(
-            name=F("category__name"),
-            slug=F("category__slug"),
-            category_image=F("category__image"),
-            category_mobile_image=F("category__mobile_image"),
-        )
-        .annotate(count=Count("id"))
-        .order_by("-count")[:5]   
-    )
-
-    books = Book.objects.filter(title__icontains=query)
-
-    brand_map = defaultdict(int)
-
-    for book in books:
-        if not book.title:
-            continue
-
-        brand = book.title.split(" ")[0].strip()
-        if brand:
-            brand_map[brand] += 1
-
-    brands = sorted(
-        [{"name": k, "count": v, "type": "brand"} for k, v in brand_map.items()],
-        key=lambda x: x["count"],
-        reverse=True
-    )[:5]
-
-
-    results = []
-
-    for c in categories:
-        raw_image = c.get("category_mobile_image") or c.get("category_image")
-        image_url = (
-            request.build_absolute_uri(raw_image)
-            if raw_image
-            else ""
-        )
-        results.append({
-            "name": c["name"],
-            "slug": c["slug"],
-            "count": c["count"],
-            "image": image_url,
-            "type": "category"
-        })
-
-    results.extend(brands)
-
-    return Response(results)

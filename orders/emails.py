@@ -35,7 +35,7 @@ def send_order_confirmation_email(order):
         "total_mrp": total_mrp,
         "total_amount": order.total_amount,
         "address": address,
-        "order_url": "https://novacart-frontend.netlify.app/orders",
+        "order_url": "https://novacart-frontend.vercel.app/my/orders",
     }
 
     html = render_to_string(

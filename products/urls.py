@@ -5,7 +5,6 @@ from .views import (
     WishlistView,
     BrandListView,
     PriceRangeView,
-    auto_suggest,
 )
 
 urlpatterns = [
@@ -15,5 +14,4 @@ urlpatterns = [
     path("<int:pk>/", BookDetailView.as_view(), name="book-detail"),
     path("wishlist/", WishlistView.as_view()),
     path("wishlist/<int:pk>/", WishlistView.as_view()),
-    path("search/suggestions/", auto_suggest),
 ]
